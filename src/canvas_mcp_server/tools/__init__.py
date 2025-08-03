@@ -1,5 +1,10 @@
-"""Canvas MCP Server tools package."""
+"""Canvas MCP Server tools package with Pydantic models."""
 
-from .hello_world import hello_world_tool
+from typing import Final, List
+from mcp.server.fastmcp.tools import Tool
 
-__all__ = ["hello_world_tool"]
+from .courses import get_courses_tool
+
+__all__: Final[List[str]] = [
+    "get_courses_tool",
+]
