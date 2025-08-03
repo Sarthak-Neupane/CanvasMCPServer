@@ -18,6 +18,19 @@ cd canvas-mcp-server
 pip install -e .
 ```
 
+### Environment Setup
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and add your API credentials:
+   ```bash
+   CANVAS_API_TOKEN=your_actual_api_token_here
+   CANVAS_BASE_URL=https://your-api.example.com
+   ```
+
 ### Development Installation
 
 ```bash
@@ -60,6 +73,7 @@ main()
 ## Available Tools
 
 - **hello_world**: A simple greeting tool for testing
+- **api_request**: Make API requests using configured credentials
 
 ## Development
 
@@ -79,7 +93,7 @@ isort src/ tests/
 ### Type Checking
 
 ```bash
-mypy src/
+mypy src/ --strict
 ```
 
 ## Project Structure
