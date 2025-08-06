@@ -1,32 +1,12 @@
 """Canvas courses package with Pydantic models and comprehensive documentation."""
 
 from typing import Final, List
-from mcp.server.fastmcp.tools import Tool
 
-from .get_courses import get_courses_tool
-from .types import (
-    CoursesQueryParams,
-    EnrollmentType,
-    EnrollmentState,
-    CoursesInclude,
-    CourseState,
-    CourseDisplayField,
-)
+from .get_all_courses import get_all_courses_tool
+from .get_courses_by_id import get_course_by_id_tool
 
 __all__: Final[List[str]] = [
     # Tools
-    "get_courses_tool",
-    
-    # Pydantic Models
-    "CoursesQueryParams",
-    "Course", 
-    "CoursesApiResponse",
-    "CourseDisplayField",
-
-    
-    # Enums
-    "EnrollmentType",
-    "EnrollmentState", 
-    "CoursesInclude",
-    "CourseState",
+    "get_all_courses_tool",
+    "get_course_by_id_tool",
 ]

@@ -2,31 +2,6 @@
 
 from enum import Enum
 
-
-class EnrollmentType(str, Enum):
-    """Canvas enrollment types for filtering courses."""
-    TEACHER = "teacher"
-    STUDENT = "student" 
-    TA = "ta"
-    OBSERVER = "observer"
-    DESIGNER = "designer"
-
-
-class EnrollmentState(str, Enum):
-    """Canvas enrollment states for filtering active/inactive enrollments."""
-    ACTIVE = "active"
-    INVITED_OR_PENDING = "invited_or_pending"
-    COMPLETED = "completed"
-
-
-class CourseState(str, Enum):
-    """Canvas course workflow states for filtering by publication status."""
-    UNPUBLISHED = "unpublished"
-    AVAILABLE = "available"
-    COMPLETED = "completed"
-    DELETED = "deleted"
-
-
 class CoursesInclude(str, Enum):
     """Additional information that can be included with Canvas courses API calls."""
     NEEDS_GRADING_COUNT = "needs_grading_count"
@@ -50,3 +25,8 @@ class CoursesInclude(str, Enum):
     BANNER_IMAGE = "banner_image"
     CONCLUDED = "concluded"
     POST_MANUALLY = "post_manually"
+
+class PerCourseInclude(str, Enum):
+    ALL_COURSES = "all_courses"
+    PERMISSIONS = "permissions"
+    

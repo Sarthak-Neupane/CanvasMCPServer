@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.tools import Tool
 from mcp.server.fastmcp.prompts import Prompt
 
-from .tools import get_courses_tool
+from .tools import get_all_courses_tool, get_course_by_id_tool
 
 
 async def signal_handler(scope: CancelScope) -> None:
@@ -45,7 +45,7 @@ async def run_server() -> None:
         instructions="Canvas MCP Server - A Model Context Protocol server for Canvas tools",
     )
 
-    tools: List[Tool] = [get_courses_tool]
+    tools: List[Tool] = [get_all_courses_tool, get_course_by_id_tool]
     for tool in tools:
         mcp.add_tool(tool.fn, tool.name, tool.description)
 
