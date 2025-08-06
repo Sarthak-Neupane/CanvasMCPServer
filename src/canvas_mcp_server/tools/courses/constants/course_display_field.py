@@ -29,14 +29,3 @@ class CourseDisplayField(Enum):
     TEACHERS = "teachers"
     SECTIONS = "sections"
 
-DETAILED_FIELDS = [
-    CourseDisplayField.ID,
-    CourseDisplayField.NAME,
-    CourseDisplayField.COURSE_CODE,
-    CourseDisplayField.WORKFLOW_STATE,
-    CourseDisplayField.START_AT,
-    CourseDisplayField.END_AT,
-    CourseDisplayField.ENROLLMENT_TERM_ID,
-    CourseDisplayField.DEFAULT_VIEW,
-]
-
