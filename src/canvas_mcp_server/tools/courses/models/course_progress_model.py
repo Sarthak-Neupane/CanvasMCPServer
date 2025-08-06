@@ -4,11 +4,11 @@ from datetime import datetime
 
 class CourseProgress(BaseModel):
     requirement_count: Annotated[
-        int,
+        Optional[int],
         Field(description="total number of requirements from all modules", example=10),
     ]
     requirement_completed_count: Annotated[
-        int,
+        Optional[int],
         Field(
             description="total number of requirements the user has completed from all modules",
             example=1,
