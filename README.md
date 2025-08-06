@@ -49,7 +49,7 @@ canvas-mcp-server
 
 ### With Claude Desktop
 
-Add to your Claude Desktop configuration:
+Add to your Claude Desktop configuration: (You might need to add full path to the directory)
 
 ```json
 {
@@ -70,10 +70,19 @@ from canvas_mcp_server import main
 main()
 ```
 
-## Available Tools
+### Available Tools
+Canvas Course Management
 
-- **hello_world**: A simple greeting tool for testing
-- **api_request**: Make API requests using configured credentials
+#### get_all_courses: 
+Retrieve all accessible courses with pagination support
+Filter by enrollment state, type, and workflow state
+Include additional fields: syllabus, teachers, sections, student counts, etc.
+Smart pagination (return all or limit results)
+
+#### get_course_by_id: 
+Get detailed information about a specific course
+Access course metadata, permissions, and detailed content
+Include teachers, sections, progress tracking, and more
 
 ## Development
 
