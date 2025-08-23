@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Annotated
 from pydantic import Field
+from .course_term_model import Term
 
 class CourseSummary(BaseModel):
     id: Annotated[str, Field(
@@ -18,8 +19,7 @@ class CourseSummary(BaseModel):
         description="The full name of the course",
         example="InstructureCon 2012"
     )]
-    state: Annotated[str, Field(
+    term: Annotated[Term | None, Field(
         default=None,
-        description="The current state of the course",
-        example="available"
-    )]
+        description="The term associated with the course, if any."
+    )] = None

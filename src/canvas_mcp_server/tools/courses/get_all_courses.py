@@ -1,4 +1,4 @@
-from typing import Final, List, Dict, Any, Union, TypeAlias
+from typing import Final, List, Dict, Any, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from ...utils import canvas_api_client, HTTPError
 from pydantic import Field
@@ -14,12 +14,16 @@ query {
     id
     name
     courseCode
-    state
+    term {
+        id
+        name
+        startAt
+    }
   }
 }
 """
 
-async def get_all_courses() -> CoursesResponse:
+async def get_all_courses(term: Annotated[str, Field(example="Fall 2025", pattern=r"^(Fall|Spring|Winter|Summer)\s\d{4}$")]) -> CoursesResponse:
     """
     Get all Canvas courses with only summary fields via GraphQL.
     """
@@ -32,6 +36,8 @@ async def get_all_courses() -> CoursesResponse:
 
         course_list = data["allCourses"]
         courses = [CourseSummary.model_validate(course) for course in course_list]
+        if term:
+            courses = [course for course in courses if course.term and course.term.name == term]
         return courses
 
     except HTTPError as e:

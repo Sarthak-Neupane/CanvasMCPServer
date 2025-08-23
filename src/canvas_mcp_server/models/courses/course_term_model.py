@@ -4,12 +4,12 @@ from datetime import datetime
 
 
 class Term(BaseModel):
-    id: Annotated[int, Field(example=1)]
-    name: Annotated[str, Field(example="Default Term")]
-    start_at: Annotated[
-        Optional[datetime], Field(example="2012-06-01T00:00:00-06:00")
+    id: Annotated[str, Field(example="VGVybS0yMjQ=")]
+    name: Annotated[str, Field(example="Fall 2025")]
+    startAt: Annotated[
+        Optional[datetime], Field(example="2025-08-12T23:59:00-05:00")
     ] = None
-    end_at: Annotated[
-        Optional[datetime], Field(example="2012-09-01T00:00:00-06:00")
+    endAt: Annotated[
+        Optional[datetime], Field(example="2025-12-20T00:00:00-06:00")
     ] = None
 
