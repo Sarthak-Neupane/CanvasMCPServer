@@ -1,0 +1,28 @@
+---
+description: Canvas LMS API knowledge for this MCP server (GraphQL endpoint, ids, pagination, auth, rate limits)
+alwaysApply: true
+---
+
+# Canvas API knowledge
+
+Before writing or changing any code that calls the Canvas API, read
+`docs/canvas-api-knowledge.md` — a curated summary of the official Instructure
+developer docs (https://developerdocs.instructure.com). Key facts:
+
+- This project uses the **GraphQL** API: single endpoint `POST {CANVAS_BASE_URL}/graphql`,
+  body `{query, variables, operationName?}`. `CANVAS_BASE_URL` must end at `/api`
+  (never `/api/v1` — that is the REST base).
+- GraphQL `id` is a base64 Relay global id; `_id` is the traditional numeric REST id.
+  `course(id:)`, `node(id:)`, and `legacyNode(type:, _id:)` are the lookup fields;
+  `course(id:)` accepts either id form.
+- Collections paginate via Relay connections: `somethingConnection(first:, after:)`
+  with `pageInfo { endCursor hasNextPage }`. Keep page sizes reasonable.
+- The GraphQL schema is incomplete vs REST; explore it in GraphiQL at
+  `https://<institution>.instructure.com/graphiql`, and fall back to REST
+  (`/api/v1/...`, Link-header pagination) when a field is missing.
+- Auth is `Authorization: Bearer <token>`. Manual profile tokens are for personal
+  testing only; multi-user distribution requires OAuth2 (1-hour tokens + refresh).
+- Handle `429` (rate limited — retry later) and `401` with `WWW-Authenticate`
+  header (bad/expired token or wrong Canvas domain).
+- To look up any other Canvas resource, append `.md` to a developerdocs URL or ask
+  the docs directly: `GET https://developerdocs.instructure.com/get_started.md?ask=<question>`.

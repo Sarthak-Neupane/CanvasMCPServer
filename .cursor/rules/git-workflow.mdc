@@ -1,0 +1,25 @@
+---
+description: Git workflow - break work into features and commit each one separately
+alwaysApply: true
+---
+
+# Git workflow
+
+This is an open source project. All changes must produce a clean, reviewable
+commit history.
+
+- **Break work into features.** Before starting a multi-part task, split it into
+  logical units (a bug fix, a new tool, a docs update, a packaging change). Each
+  unit gets its own commit — never one giant commit mixing unrelated changes.
+- **Commit as you go.** After finishing and verifying each unit, commit it
+  immediately before moving to the next. Do not leave a long session's work
+  uncommitted.
+- **Commit messages**: a short imperative summary line (e.g. "Fix model exports
+  broken in GraphQL refactor"), plus a body when the why isn't obvious. No
+  work-in-progress noise like "wip" or "fixes".
+- **Nothing personal in the repo.** Never commit `.env`, API tokens, real course
+  or institution IDs, or machine-specific paths. Placeholders belong in
+  `.env.example`. If a secret was ever committed, flag it for rotation.
+- **Everything documented.** A change to tools, config, or setup must update the
+  README (and docstrings) in the same commit series.
+- Do not push unless explicitly asked; commits are local by default.
