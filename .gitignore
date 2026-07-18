@@ -169,7 +169,16 @@ cython_debug/
 .LSOverride
 
 # uv
-uv.lock
+# NOTE: uv.lock is intentionally tracked for reproducible installs.
+
+# Environment files (never commit real credentials; .env.example is the template)
+.env
+.env.*
+!.env.example
+
+# Local editor / AI-assistant state (.cursor/rules is intentionally tracked)
+.cursor/*
+!.cursor/rules/
 
 # MCP Server specific
 server.log
