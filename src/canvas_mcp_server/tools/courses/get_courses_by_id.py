@@ -1,11 +1,14 @@
-from typing import Final, TypeAlias, Union, List, Dict, Any
+"""Tool for fetching a single Canvas course via the GraphQL API."""
+
+from typing import Final, TypeAlias, Union, Dict, Any, Annotated
+
 from mcp.server.fastmcp.tools import Tool
-from ...utils import canvas_api_client, HTTPError
-import base64
+from pydantic import Field
 
 from ...models import CourseDetail
+from ...utils import canvas_api_client, HTTPError
 
-COURSE_RESPONSE: TypeAlias = Union[CourseDetail, Dict[str, Any]]
+CourseResponse: TypeAlias = Union[CourseDetail, Dict[str, Any]]
 
 GRAPHQL_QUERY = """
 query ($id: ID!) {
@@ -19,18 +22,32 @@ query ($id: ID!) {
 }
 """
 
-async def get_course_by_id(course_id: str) -> Any:
+
+async def get_course_by_id(
+    course_id: Annotated[
+        str,
+        Field(
+            description=(
+                "The course ID. Accepts either the numeric Canvas ID "
+                "(e.g. '123456') or the GraphQL global ID."
+            ),
+        ),
+    ],
+) -> CourseResponse:
     """
-    Get a single Canvas course using a course_id via GraphQL.
+    Get a single Canvas course by its ID via GraphQL.
+
+    Returns course details (id, name, course code, state),
+    or an error object with "error", "message", and optionally "status_code" keys.
     """
-    # Q291cnNlLTEyNDQ1MDAwMDAwMDExMDE0OA== is the base64 encoded version of "Course-124450000001148"
     try:
         variables = {"id": course_id}
-        response = await canvas_api_client.post_graphql_query(query=GRAPHQL_QUERY, variables=variables)
-        if isinstance(response.data, dict):
-            data = response.data.get("data", response.data)
-        else:
+        response = await canvas_api_client.post_graphql_query(
+            query=GRAPHQL_QUERY, variables=variables
+        )
+        if not isinstance(response.data, dict):
             raise Exception("Response data is not a dictionary")
+        data = response.data.get("data", response.data)
 
         course = data.get("course")
         if course is None:
@@ -41,17 +58,20 @@ async def get_course_by_id(course_id: str) -> Any:
         return {
             "error": "HTTP Error",
             "message": str(e),
-            "status_code": e.status_code
+            "status_code": e.status_code,
         }
     except Exception as e:
         return {
             "error": "Unexpected Error",
-            "message": str(e)
+            "message": str(e),
         }
 
 
 get_course_by_id_tool: Final[Tool] = Tool.from_function(
     name="get_course_by_id",
-    description="Returns a single course using its ID.",
+    description=(
+        "Get detailed information about a single Canvas course by its ID "
+        "(numeric or GraphQL global ID)."
+    ),
     fn=get_course_by_id,
 )
