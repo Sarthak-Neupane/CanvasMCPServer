@@ -1,135 +1,157 @@
 # Canvas MCP Server
 
-A Model Context Protocol (MCP) server that provides Canvas-related tools for AI assistants.
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that lets AI
+assistants (Cursor, Claude Desktop, and any other MCP client) query your
+[Canvas LMS](https://www.instructure.com/canvas) data — courses, terms, and more —
+through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/canvas/basics/file.graphql).
 
 ## Features
 
-- 🎨 Canvas tool integration
-- 🔧 Extensible tool architecture
-- 🚀 Fast and lightweight
+- Query Canvas via GraphQL (single request, no REST pagination juggling)
+- Typed responses validated with Pydantic models
+- Structured error reporting (auth failures, rate limits, missing resources)
+- Runs over stdio — works with any MCP client
+- Graceful shutdown on SIGINT/SIGTERM
+
+## Available Tools
+
+| Tool | Description |
+| --- | --- |
+| `get_all_courses` | List all courses for the current user (id, name, course code, term). Optional `term` filter, e.g. `"Fall 2025"`. |
+| `get_course_by_id` | Get details for a single course by numeric ID or GraphQL global ID. |
+
+## Requirements
+
+- Python 3.13+
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+- A Canvas API access token
 
 ## Installation
-
-### From Source
 
 ```bash
 git clone https://github.com/sarthakneupane/canvas-mcp-server.git
 cd canvas-mcp-server
+uv sync            # creates .venv and installs everything from uv.lock
+```
+
+Or with pip:
+
+```bash
 pip install -e .
 ```
 
-### Environment Setup
+## Configuration
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
 
-2. Edit `.env` and add your API credentials:
+2. Edit `.env`:
+
    ```bash
    CANVAS_API_TOKEN=your_actual_api_token_here
-   CANVAS_BASE_URL=https://your-api.example.com
+   CANVAS_BASE_URL=https://your-school.instructure.com/api
    ```
 
-### Development Installation
+   - **Token**: generate one in Canvas under Account → Profile → Approved
+     Integrations → "New Access Token". Treat it like a password.
+   - **Base URL**: must end at `/api` (not `/api/v1`) — the server posts GraphQL
+     queries to `{CANVAS_BASE_URL}/graphql`.
 
-```bash
-git clone https://github.com/sarthakneupane/canvas-mcp-server.git
-cd canvas-mcp-server
-pip install -e ".[dev]"
-```
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `CANVAS_API_TOKEN` | yes | — | Canvas API access token |
+| `CANVAS_BASE_URL` | no | `https://canvas.instructure.com/api` | Canvas API base URL (must end at `/api`) |
+| `CANVAS_TIMEOUT` | no | `30` | Request timeout in seconds |
+| `DEBUG` | no | `false` | Enable debug mode |
+| `LOG_LEVEL` | no | `INFO` | Log level |
 
 ## Usage
 
-### As a Standalone Server
+### Standalone
 
 ```bash
-canvas-mcp-server
+uv run canvas-mcp-server
 ```
 
-### With Claude Desktop
+The server communicates over stdio (stdin/stdout JSON-RPC); it is meant to be
+launched by an MCP client rather than used interactively.
 
-Add to your Claude Desktop configuration: (You might need to add full path to the directory)
+### With Cursor
+
+Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per-project), using
+the absolute path to your clone:
 
 ```json
 {
   "mcpServers": {
-    "canvas-mcp-server": {
-      "command": "canvas-mcp-server"
+    "canvas": {
+      "command": "/absolute/path/to/canvas-mcp-server/.venv/bin/canvas-mcp-server"
     }
   }
 }
 ```
 
-### Programmatic Usage
+Then refresh MCP servers in Cursor Settings and ask e.g. *"list my Fall 2025 courses"*.
 
-```python
-from canvas_mcp_server import main
+### With Claude Desktop
 
-# Run the server
-main()
+Add to your Claude Desktop configuration:
+
+```json
+{
+  "mcpServers": {
+    "canvas": {
+      "command": "/absolute/path/to/canvas-mcp-server/.venv/bin/canvas-mcp-server"
+    }
+  }
+}
 ```
-
-### Available Tools
-Canvas Course Management
-
-#### get_all_courses: 
-Retrieve all accessible courses with pagination support
-Filter by enrollment state, type, and workflow state
-Include additional fields: syllabus, teachers, sections, student counts, etc.
-Smart pagination (return all or limit results)
-
-#### get_course_by_id: 
-Get detailed information about a specific course
-Access course metadata, permissions, and detailed content
-Include teachers, sections, progress tracking, and more
 
 ## Development
 
-### Running Tests
-
 ```bash
-pytest
-```
+uv sync                          # install dependencies (incl. dev tooling via pip extras)
+uv run python scripts/run_server.py   # run the dev server
 
-### Code Formatting
-
-```bash
-black src/ tests/
-isort src/ tests/
-```
-
-### Type Checking
-
-```bash
-mypy src/ --strict
+uv run pytest                    # tests
+uv run black src/ tests/         # formatting
+uv run isort src/ tests/
+uv run mypy src/ --strict        # type checking
 ```
 
 ## Project Structure
 
 ```
 canvas-mcp-server/
-├── src/canvas_mcp_server/    # Main package
-│   ├── server.py             # Server implementation
-│   └── tools/                # Available tools
-├── tests/                    # Test suite
-├── examples/                 # Usage examples
-└── scripts/                  # Development scripts
+├── src/canvas_mcp_server/
+│   ├── server.py          # FastMCP server setup, tool registration, entry point
+│   ├── config.py          # Environment configuration (.env)
+│   ├── tools/courses/     # MCP tools (one file per tool)
+│   ├── models/courses/    # Pydantic models for Canvas responses
+│   ├── constants/         # Canvas enums (workflow states, enrollment types, ...)
+│   └── utils/             # HTTP + Canvas GraphQL client
+├── docs/                  # Canvas API reference notes
+├── scripts/               # Development scripts
+└── tests/                 # Test suite
 ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Make your changes
-4. Run tests (`pytest`)
-5. Commit your changes (`git commit -m 'Add new feature'`)
-6. Push to the branch (`git push origin feature/new-feature`)
-7. Open a Pull Request
+3. Make your changes — keep commits small and feature-scoped
+4. Run tests (`uv run pytest`) and type checks (`uv run mypy src/ --strict`)
+5. Open a Pull Request
+
+Never commit `.env` or real API tokens. See `docs/canvas-api-knowledge.md` for a
+summary of the Canvas API used by this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
