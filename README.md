@@ -19,6 +19,18 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | --- | --- |
 | `get_all_courses` | List all courses for the current user (id, name, course code, term). Optional `term` filter, e.g. `"Fall 2025"`. |
 | `get_course_by_id` | Get details for a single course by numeric ID or GraphQL global ID. |
+| `get_upcoming_assignments` | List upcoming assignments across all courses with due dates and points. |
+| `get_assignments_for_course` | List all assignments in a course (name, due date, points, state, URL). |
+| `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
+| `get_todo_items` | List the user's todo items: assignments to submit (students) or grade (teachers). |
+| `get_submission_status` | Check submission status for an assignment: submitted/late/missing, score and grade. Students see their own; teachers see all. |
+| `get_course_grades` | Get current and final scores/grades for a course. Students see their own; teachers see all students. |
+| `get_announcements` | List a course's announcements (title, message, post date, author). |
+
+Course, assignment, submission, grade, and announcement data comes from the
+[Canvas GraphQL API](https://developerdocs.instructure.com/services/canvas/basics/file.graphql);
+todo items and upcoming assignments use the REST API since GraphQL does not
+expose them.
 
 ## Requirements
 
