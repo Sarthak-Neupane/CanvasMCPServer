@@ -1,11 +1,9 @@
 """Canvas API client utilities for making Canvas-specific requests."""
 
-from typing import Dict, Any, Optional, List, Union, TypeVar, Type
-from pydantic import BaseModel
+from typing import Dict, Any, Optional
+
 from ..config import config
 from .http_client import BaseHTTPClient, HTTPResponse, HTTPError
-
-T = TypeVar("T", bound=BaseModel)
 
 
 class CanvasAPIClient(BaseHTTPClient):
@@ -31,6 +29,24 @@ class CanvasAPIClient(BaseHTTPClient):
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
     ) -> HTTPResponse:
+        """
+        Execute a GraphQL query against the Canvas API.
+
+        Posts to {CANVAS_BASE_URL}/graphql per the Canvas GraphQL docs.
+
+        Args:
+            query: The GraphQL query or mutation to execute.
+            variables: Values for any variables referenced by the query.
+            headers: Additional headers to merge into the request.
+            timeout: Request timeout override in seconds.
+
+        Returns:
+            HTTPResponse: The raw response; GraphQL payload is in `.data`.
+
+        Raises:
+            HTTPError: If the request fails or Canvas returns an error status.
+            ValueError: If required configuration (API token) is missing.
+        """
         config.validate()
         graphql_endpoint = "graphql"
         body = {"query": query, "variables": variables or {}}
@@ -59,7 +75,7 @@ class CanvasAPIClient(BaseHTTPClient):
                 )
             elif e.status_code == 404:
                 raise HTTPError(
-                    f"Canvas API endpoint not found",
+                    "Canvas API endpoint not found",
                     status_code=e.status_code,
                     response_data=e.response_data,
                     url=e.url,

@@ -2,7 +2,7 @@
 
 import os
 import sys
-from typing import Dict, Optional, Union
+from typing import Dict
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -13,8 +13,9 @@ class Config:
     """Configuration class for Canvas MCP Server."""
     
     # API Configuration
+    # The base URL must end at /api (the GraphQL endpoint is {base}/graphql).
     CANVAS_API_TOKEN: str = os.getenv("CANVAS_API_TOKEN", "")
-    CANVAS_BASE_URL: str = os.getenv("CANVAS_BASE_URL", "https://canvas.instructure.com/api/v1")
+    CANVAS_BASE_URL: str = os.getenv("CANVAS_BASE_URL", "https://canvas.instructure.com/api")
     CANVAS_TIMEOUT: int = int(os.getenv("CANVAS_TIMEOUT", "30"))
     
     # Debug Configuration
