@@ -208,7 +208,69 @@ Related objects (match this repo's Pydantic models):
 
 ---
 
-## 5. Looking up more documentation (for future tools)
+## 5. GraphQL schema notes for tools (verified against canvas-lms source)
+
+Verified from `app/graphql/` in the canvas-lms repository. Argument and field
+names below are the GraphQL camelCase forms.
+
+### Top-level Query fields
+
+`allCourses`, `course(id:)`, `assignment(id:)`, `submission(id: | assignmentId: + userId:)`,
+`user(id:)`, `term(id:)`, `node(id:)`, `legacyNode(type:, _id:)`. There is **no**
+top-level query for todo items or upcoming events — those are REST-only.
+
+### Assignments
+
+- `course(id:) { assignmentsConnection(first:, after:, filter: { searchTerm, userId, gradingPeriodId, submissionTypes }) }`
+- Assignment fields: `_id`, `name`, `description` (HTML), `dueAt`, `lockAt`,
+  `unlockAt`, `pointsPossible`, `state` (unpublished|published|deleted),
+  `htmlUrl`, `gradingType`, `submissionTypes`, `allowedAttempts`, `quiz`,
+  `rubric`, `course { _id name }`, `hasSubmittedSubmissions`,
+  `needsGradingCount` (teachers), `submissionsConnection`.
+- Top-level `assignment(id:)` accepts numeric or global ID.
+
+### Submissions
+
+- `assignment(id:) { submissionsConnection }` — for students this returns only
+  their own submission (visibility is enforced server-side); teachers get all.
+- Top-level `submission(assignmentId:, userId:)` needs an explicit user id.
+- Submission fields: `_id`, `state` (submitted|unsubmitted|graded|pending_review|deleted),
+  `submissionStatus`, `gradingStatus`, `score`, `grade`, `enteredScore`,
+  `enteredGrade`, `excused`, `late`, `missing`, `secondsLate`, `submittedAt`,
+  `gradedAt`, `postedAt`, `posted`, `cachedDueDate`, `attempt`,
+  `submissionType`, `deductedPoints`, `redoRequest`, `user { _id name }`,
+  `assignment { _id name }`.
+
+### Grades / enrollments
+
+- `course(id:) { enrollmentsConnection(filter: { userIds, types, states }) { nodes { ... } } }`
+  Requires read_roster/read_grades; students are auto-scoped to themselves.
+- Enrollment fields: `_id`, `type` (StudentEnrollment...), `state`,
+  `user { _id name }`, `grades { currentScore currentGrade finalScore
+  finalGrade unpostedCurrentScore unpostedCurrentGrade overrideScore overrideGrade }`.
+- `grades(gradingPeriodId:)` defaults to the current grading period.
+
+### Announcements / discussions
+
+- `course(id:) { discussionsConnection(filter: { isAnnouncement: true, searchTerm, userId }) }`
+- Discussion fields: `_id`, `title`, `message` (HTML), `postedAt`,
+  `delayedPostAt`, `isAnnouncement`, `contextName`, `author { name }`.
+- REST alternative for multi-course queries: `GET /api/v1/announcements?context_codes[]=course_123`
+  (defaults to last 14 days; `start_date`/`end_date`/`latest_only` params).
+
+### REST-only endpoints needed by tools
+
+- **Todo items**: `GET /api/v1/users/self/todo` — items with `type`
+  ("grading" | "submitting"), embedded `assignment` (or `quiz` with
+  `include[]=ungraded_quizzes`), `context_type`, `course_id`, `html_url`,
+  `needs_grading_count` (grading items). `course_ids[]` filters.
+- **Upcoming events**: `GET /api/v1/users/self/upcoming_events` — calendar
+  events and assignments mixed; assignment entries carry an `assignment`
+  object (`id`, `name`, `due_at`, `points_possible`, `html_url`,
+  `course_id`) plus `context_code` like `course_12942`.
+- **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
+
+## 6. Looking up more documentation (for future tools)
 
 - Full index: <https://developerdocs.instructure.com/llms.txt>
   (complete corpus: `llms-full.txt`).
