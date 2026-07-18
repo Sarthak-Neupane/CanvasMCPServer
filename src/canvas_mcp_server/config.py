@@ -14,8 +14,11 @@ class Config:
     
     # API Configuration
     # The base URL must end at /api (the GraphQL endpoint is {base}/graphql).
+    # There is no default: the public canvas.instructure.com instance
+    # (Free-for-Teacher) was permanently discontinued in 2026, so users
+    # must point at their institution's Canvas domain.
     CANVAS_API_TOKEN: str = os.getenv("CANVAS_API_TOKEN", "")
-    CANVAS_BASE_URL: str = os.getenv("CANVAS_BASE_URL", "https://canvas.instructure.com/api")
+    CANVAS_BASE_URL: str = os.getenv("CANVAS_BASE_URL", "")
     CANVAS_TIMEOUT: int = int(os.getenv("CANVAS_TIMEOUT", "30"))
     
     # Debug Configuration
@@ -33,6 +36,11 @@ class Config:
         if not cls.CANVAS_API_TOKEN:
             raise ValueError(
                 "CANVAS_API_TOKEN is required. Please set it in your environment or .env file."
+            )
+        if not cls.CANVAS_BASE_URL:
+            raise ValueError(
+                "CANVAS_BASE_URL is required (e.g. https://your-school.instructure.com/api). "
+                "Please set it in your environment or .env file."
             )
     
     @classmethod
