@@ -70,9 +70,14 @@ pip install -e .
    - **Token**: generate one in Canvas under Account → Profile → Approved
      Integrations → "New Access Token". Treat it like a password.
    - **Base URL**: must end at `/api` (not `/api/v1`) — the server posts GraphQL
-     queries to `{CANVAS_BASE_URL}/graphql`. Use your institution's Canvas
-     domain; the public Free-for-Teacher instance (`canvas.instructure.com`)
-     was [permanently discontinued in 2026](https://www.instructure.com/incident-update/customers).
+     queries to `{CANVAS_BASE_URL}/graphql`. Use **your own institution's**
+     Canvas domain: it is the URL you see in the browser when you log in to
+     Canvas, with `/api` appended. Most schools use
+     `https://<your-school>.instructure.com`, while some use a custom domain
+     such as `https://canvas.<your-school>.edu` — use whichever one you log in
+     with. The public Free-for-Teacher instance (`canvas.instructure.com`) was
+     [permanently discontinued in 2026](https://www.instructure.com/incident-update/customers),
+     so an institution domain is required.
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
