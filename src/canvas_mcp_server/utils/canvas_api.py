@@ -128,6 +128,15 @@ class CanvasAPIClient(BaseHTTPClient):
                 response_data=e.response_data,
                 url=e.url,
             )
+        if e.status_code is not None and 500 <= e.status_code < 600:
+            return HTTPError(
+                "Canvas is temporarily unavailable "
+                f"(HTTP {e.status_code}). This is a Canvas-side outage; "
+                "retry once the platform is back up.",
+                status_code=e.status_code,
+                response_data=e.response_data,
+                url=e.url,
+            )
         return e
 
 
