@@ -9,7 +9,7 @@ from .courses.course_summary_model import CourseSummary
 
 __all__: Final[List[str]] = [
     # Models for course data
-    "CourseDetail"
+    "CourseDetail",
     "CalendarLink",
     "CourseProgress",
     "Term",

@@ -1,6 +1,5 @@
 """Main Canvas MCP Server implementation."""
 
-import os
 import signal
 import sys
 from typing import List

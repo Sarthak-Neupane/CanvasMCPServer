@@ -1,6 +1,6 @@
 """Canvas MCP Server - A Model Context Protocol server for Canvas tools."""
 
-from typing import Final, List, Callable
+from typing import Final, List
 from .server import main
 
 __version__: Final[str] = "0.1.0"

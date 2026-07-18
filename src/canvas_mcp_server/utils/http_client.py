@@ -1,11 +1,8 @@
 """HTTP client utilities for making API requests."""
 
-from typing import Dict, Any, Optional, Union, TypeVar, Generic
+from typing import Dict, Any, List, Optional, Union
 from dataclasses import dataclass
 import httpx
-from pydantic import BaseModel
-
-T = TypeVar('T', bound=BaseModel)
 
 
 @dataclass
@@ -18,7 +15,7 @@ class HTTPResponse:
     """
     
     status_code: int
-    data: Union[Dict[str, Any], list, str]
+    data: Union[Dict[str, Any], List[Any], str]
     headers: Dict[str, str]
     url: str
     
