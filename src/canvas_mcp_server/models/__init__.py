@@ -10,6 +10,7 @@ from .assignments.assignment_resource_model import (
 )
 from .assignments.assignment_summary_model import AssignmentSummary
 from .assignments.upcoming_assignment_model import UpcomingAssignment
+from .calendar.calendar_event_model import CalendarEvent
 from .courses.course_calendar_model import CalendarLink
 from .courses.course_detail_model import CourseDetail
 from .courses.course_progress_model import CourseProgress
@@ -62,6 +63,8 @@ __all__: Final[List[str]] = [
     "AssignmentResources",
     "AssignmentResourceType",
     "UpcomingAssignment",
+    # Calendar
+    "CalendarEvent",
     # Submissions
     "AssignmentSubmissions",
     "SubmissionStatus",

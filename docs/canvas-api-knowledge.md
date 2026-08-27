@@ -293,6 +293,13 @@ top-level query for todo items or upcoming events — those are REST-only.
   flags, and `planner_override` (`marked_complete`, `dismissed`). Tools
   normalize `plannable_type` to student-facing labels (`discussion_topic` →
   `discussion`, `wiki_page` → `page`, `planner_note` → `note`).
+- **Calendar events**: `GET /api/v1/calendar_events` — dated calendar events
+  and assignment due dates (`type` = `event` or `assignment`; the tool fetches
+  both and merges). Params: `start_date`, `end_date`, `context_codes[]`
+  (`course_{id}`, up to 10 per request). Without `context_codes[]`, Canvas
+  defaults to the user's personal calendar only — `get_calendar_events` scopes
+  to dashboard courses when `course_id` is omitted. Use `excludes[]=description`
+  and `excludes[]=child_events` to keep list payloads small.
 - **Dashboard / current courses**: `GET /api/v1/dashboard/dashboard_cards` —
   the courses shown on the Canvas dashboard. Prefer this over
   `GET /api/v1/courses?enrollment_state=active`, which can still include
