@@ -33,14 +33,7 @@ COURSE_BY_ID_GRAPHQL = {
         "id": "course-gid-100001",
         "name": "Intro to Testing",
         "courseCode": "TEST101",
-        "startAt": "2025-08-15T00:00:00Z",
-        "endAt": "2025-12-15T23:59:59Z",
-        "term": {
-            "_id": "9001",
-            "name": "Fall 2025",
-            "startAt": "2025-08-15T00:00:00Z",
-            "endAt": "2025-12-15T23:59:59Z",
-        },
+        "state": "available",
     }
 }
 
@@ -72,10 +65,12 @@ REST_COURSES_ACTIVE = [
 
 SYLLABUS_HTML_REST = {
     "id": 100001,
+    "name": "Intro to Testing",
     "syllabus_body": "<p>Welcome to Intro to Testing.</p>",
 }
 
 SYLLABUS_EMPTY_REST = {
     "id": 100001,
+    "name": "Intro to Testing",
     "syllabus_body": None,
 }

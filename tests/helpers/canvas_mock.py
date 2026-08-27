@@ -168,6 +168,30 @@ class CanvasAPIMock:
         self._rest_routes[endpoint] = _raise
         return self
 
+    def graphql_raises(
+        self,
+        *,
+        status_code: int,
+        message: str = "Canvas API error",
+    ) -> "CanvasAPIMock":
+        """Make the next GraphQL call raise HTTPError (transport/auth failures)."""
+
+        async def _raise(
+            query: str,
+            variables: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, str]] = None,
+            timeout: Optional[float] = None,
+        ) -> HTTPResponse:
+            del query, variables, headers, timeout
+            raise HTTPError(
+                message,
+                status_code=status_code,
+                url="https://canvas.example.edu/api/graphql",
+            )
+
+        self.graphql.side_effect = _raise
+        return self
+
     def apply(self) -> "CanvasAPIMock":
         """Patch the global client and return self."""
         self.configure()
