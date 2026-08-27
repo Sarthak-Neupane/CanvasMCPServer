@@ -3,6 +3,7 @@ from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, Field
 
+from ..common.untrusted_content import UntrustedContentMixin
 from .assignment_summary_model import AssignmentSummary
 
 
@@ -17,7 +18,7 @@ class AssignmentCourseRef(BaseModel):
     ] = None
 
 
-class AssignmentDetail(AssignmentSummary):
+class AssignmentDetail(AssignmentSummary, UntrustedContentMixin):
     description: Annotated[
         Optional[str],
         Field(description="The assignment description as HTML"),

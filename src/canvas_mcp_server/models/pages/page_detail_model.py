@@ -2,10 +2,11 @@ from typing import Annotated, Optional
 
 from pydantic import Field
 
+from ..common.untrusted_content import UntrustedContentMixin
 from .page_summary_model import PageSummary
 
 
-class PageDetail(PageSummary):
+class PageDetail(PageSummary, UntrustedContentMixin):
     """Full wiki page content including HTML body and optional plain text."""
 
     body: Annotated[

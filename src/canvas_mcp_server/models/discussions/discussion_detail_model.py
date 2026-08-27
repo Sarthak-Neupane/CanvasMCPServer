@@ -4,10 +4,11 @@ from typing import Annotated, Optional
 
 from pydantic import Field
 
+from ..common.untrusted_content import UntrustedContentMixin
 from .discussion_summary_model import DiscussionSummary
 
 
-class DiscussionDetail(DiscussionSummary):
+class DiscussionDetail(DiscussionSummary, UntrustedContentMixin):
     """Full discussion topic including the prompt HTML."""
 
     message: Annotated[

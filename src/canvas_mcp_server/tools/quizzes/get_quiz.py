@@ -10,6 +10,7 @@ from pydantic import Field
 
 from ...models import QuizDetail
 from ...errors import as_tool_error
+from ...utils.content_metadata import attach_content_metadata
 from ...utils import canvas_api_client
 from ...utils.html import html_to_text
 from ._parse import sanitize_quiz_api_payload
@@ -47,10 +48,16 @@ async def get_quiz(
             sanitize_quiz_api_payload(response.data)
         )
         if detail.description:
-            return detail.model_copy(
+            detail = detail.model_copy(
                 update={"description_text": html_to_text(detail.description)}
             )
-        return detail
+        return attach_content_metadata(
+            detail,
+            source_type="quiz",
+            course_id=course_id,
+            resource_id=str(detail.quiz_id or quiz_id),
+            canvas_url=detail.html_url,
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

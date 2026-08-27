@@ -9,6 +9,20 @@ from typing import Any, Dict, List, Optional
 CanvasLink = Dict[str, Optional[str]]
 CanvasResourceReference = Dict[str, Optional[str]]
 
+_SKIP_CONTENT_TAGS = frozenset(
+    {
+        "script",
+        "style",
+        "noscript",
+        "iframe",
+        "object",
+        "embed",
+        "template",
+        "svg",
+        "canvas",
+    }
+)
+_UNSAFE_LINK_SCHEMES = ("javascript:", "vbscript:", "data:")
 _FILE_PATH_RE = re.compile(
     r"/courses/(?P<course_id>\d+)/files/(?P<file_id>\d+)"
 )
@@ -39,7 +53,7 @@ _EXTERNAL_URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 
 
 class _TextExtractor(HTMLParser):
-    """Collect visible text, skipping script and style contents."""
+    """Collect visible text while skipping executable or embedded content."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -47,11 +61,11 @@ class _TextExtractor(HTMLParser):
         self._skip_depth = 0
 
     def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
-        if tag.lower() in {"script", "style"}:
+        if tag.lower() in _SKIP_CONTENT_TAGS:
             self._skip_depth += 1
 
     def handle_endtag(self, tag: str) -> None:
-        if tag.lower() in {"script", "style"} and self._skip_depth:
+        if tag.lower() in _SKIP_CONTENT_TAGS and self._skip_depth:
             self._skip_depth -= 1
 
     def handle_data(self, data: str) -> None:
@@ -63,28 +77,35 @@ class _TextExtractor(HTMLParser):
 
 
 class _LinkExtractor(HTMLParser):
-    """Extract anchor href/text pairs from HTML."""
+    """Extract safe anchor href/text pairs from HTML."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.links: List[CanvasLink] = []
         self._current_href: Optional[str] = None
         self._current_text: List[str] = []
+        self._skip_depth = 0
 
     def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
-        if tag.lower() != "a":
+        if tag.lower() in _SKIP_CONTENT_TAGS:
+            self._skip_depth += 1
+            return
+        if tag.lower() != "a" or self._skip_depth:
             return
         attr_map = {key.lower(): value for key, value in attrs if value is not None}
         href = attr_map.get("href")
-        if href:
+        if href and not _is_unsafe_href(href):
             self._current_href = href
             self._current_text = []
 
     def handle_data(self, data: str) -> None:
-        if self._current_href is not None and data:
+        if self._skip_depth == 0 and self._current_href is not None and data:
             self._current_text.append(data)
 
     def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in _SKIP_CONTENT_TAGS and self._skip_depth:
+            self._skip_depth -= 1
+            return
         if tag.lower() != "a" or self._current_href is None:
             return
         text = re.sub(r"\s+", " ", "".join(self._current_text)).strip() or None
@@ -93,8 +114,18 @@ class _LinkExtractor(HTMLParser):
         self._current_text = []
 
 
+def _is_unsafe_href(href: str) -> bool:
+    normalized = href.strip().lower()
+    return normalized.startswith(_UNSAFE_LINK_SCHEMES)
+
+
 def html_to_text(html: Optional[str]) -> str:
-    """Return plain text from HTML, stripping script/style blocks and tags."""
+    """
+    Return plain text from HTML.
+
+    Strips tags and ignores script/style/embed content. Output is for agent
+    reading only — this server never executes Canvas HTML.
+    """
     if not html:
         return ""
     parser = _TextExtractor()
@@ -136,6 +167,9 @@ def _resource(
 
 
 def _classify_href(href: str, label: Optional[str] = None) -> Optional[CanvasResourceReference]:
+    if _is_unsafe_href(href):
+        return None
+
     for pattern, resource_type, id_key in (
         (_FILE_PATH_RE, "file", "file_id"),
         (_PAGE_PATH_RE, "page", "page_slug"),

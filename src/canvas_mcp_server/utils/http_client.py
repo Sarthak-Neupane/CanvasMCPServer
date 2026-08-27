@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import httpx
 
 from ..config import config
+from .redaction import redact_sensitive_text, redact_url
 from .retry_policy import (
     compute_retry_delay,
     should_retry_status,
@@ -64,11 +65,13 @@ class HTTPError(Exception):
     
     def __str__(self) -> str:
         """Provide detailed error information for debugging."""
-        base_msg = super().__str__()
+        base_msg = redact_sensitive_text(super().__str__())
         if self.status_code:
             base_msg += f" (Status: {self.status_code})"
         if self.url:
-            base_msg += f" (URL: {self.url})"
+            safe_url = redact_url(self.url)
+            if safe_url:
+                base_msg += f" (URL: {safe_url})"
         return base_msg
 
 

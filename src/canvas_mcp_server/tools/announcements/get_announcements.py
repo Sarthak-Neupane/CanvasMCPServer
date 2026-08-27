@@ -6,6 +6,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import Announcement, ListResult
+from ...utils.content_metadata import attach_content_metadata
 from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client, extract_graphql_data
@@ -83,7 +84,15 @@ async def get_announcements(
             fetch_connection,
             max_pages=DEFAULT_GRAPHQL_MAX_PAGES,
         )
-        items = [Announcement.model_validate(node) for node in paginated.items]
+        items = [
+            attach_content_metadata(
+                Announcement.model_validate(node),
+                source_type="announcement",
+                course_id=course_id,
+                resource_id=str(node.get("_id")),
+            )
+            for node in paginated.items
+        ]
         return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:

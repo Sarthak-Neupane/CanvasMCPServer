@@ -3,6 +3,8 @@ from typing import Annotated, Optional
 
 from pydantic import BaseModel, Field
 
+from ..common.untrusted_content import UntrustedContentMixin
+
 
 class AnnouncementAuthorRef(BaseModel):
     name: Annotated[
@@ -10,7 +12,7 @@ class AnnouncementAuthorRef(BaseModel):
     ] = None
 
 
-class Announcement(BaseModel):
+class Announcement(UntrustedContentMixin):
     id: Annotated[
         str,
         Field(alias="_id", description="The numeric Canvas ID of the announcement"),

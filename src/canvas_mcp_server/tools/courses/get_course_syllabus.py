@@ -10,6 +10,7 @@ from pydantic import Field
 
 from ...models import CourseSyllabus
 from ...errors import as_tool_error
+from ...utils.content_metadata import attach_content_metadata
 from ...utils import canvas_api_client
 
 CourseSyllabusResponse: TypeAlias = Union[CourseSyllabus, Dict[str, Any]]
@@ -44,11 +45,17 @@ async def get_course_syllabus(
         if not isinstance(data, dict):
             raise Exception("Canvas course response was not an object")
 
-        return CourseSyllabus(
+        syllabus = CourseSyllabus(
             course_id=str(data.get("id", course_id)),
             course_name=data.get("name"),
             syllabus_body=data.get("syllabus_body"),
             syllabus_course_summary=data.get("syllabus_course_summary"),
+        )
+        return attach_content_metadata(
+            syllabus,
+            source_type="syllabus",
+            course_id=syllabus.course_id,
+            resource_id=syllabus.course_id,
         )
 
     except Exception as e:

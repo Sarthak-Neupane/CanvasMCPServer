@@ -39,3 +39,15 @@ class SearchResult(BaseModel):
         Optional[str],
         Field(description="Canvas web or API URL when available"),
     ] = None
+    source_type: Annotated[
+        Optional[str],
+        Field(
+            description="Same as content_type; included for unified metadata naming",
+        ),
+    ] = None
+    canvas_url: Annotated[
+        Optional[str],
+        Field(
+            description="Canvas web path or URL for the matched object",
+        ),
+    ] = None

@@ -6,7 +6,11 @@ from canvas_mcp_server.utils.html import (
     extract_canvas_resource_references,
     html_to_text,
 )
-from tests.fixtures.html_snippets import ASSIGNMENT_DESCRIPTION_HTML, SYLLABUS_HTML
+from tests.fixtures.html_snippets import (
+    ASSIGNMENT_DESCRIPTION_HTML,
+    DANGEROUS_HTML,
+    SYLLABUS_HTML,
+)
 
 
 def test_html_to_text_strips_script_and_style() -> None:
@@ -50,6 +54,24 @@ def test_extract_canvas_resource_references_assignment_link() -> None:
     assert references[0]["type"] == "assignment"
     assert references[0]["id"] == "200001"
     assert references[0]["course_id"] == "100001"
+
+
+def test_html_to_text_strips_embedded_and_unsafe_content() -> None:
+    text = html_to_text(DANGEROUS_HTML)
+
+    assert "visible paragraph" in text
+    assert "iframe text" not in text
+    assert "object text" not in text
+    assert "embed text" not in text
+    assert "noscript text" not in text
+    assert "template text" not in text
+    assert "svg title" not in text
+
+
+def test_extract_canvas_links_ignores_javascript_hrefs() -> None:
+    links = extract_canvas_links(DANGEROUS_HTML)
+
+    assert links == []
 
 
 def test_extract_file_ids_from_html_delegates_to_html_utils() -> None:

@@ -11,6 +11,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.tools import Tool
 from mcp.server.fastmcp.prompts import Prompt
 
+from .utils.redaction import redact_sensitive_text
 from .tools import ALL_TOOLS
 from .utils.canvas_api import canvas_api_client
 
@@ -75,7 +76,7 @@ def main() -> None:
         print("Starting Canvas MCP Server...", file=sys.stderr)
         run(run_server)
     except Exception as e:
-        print(f"Error in main: {e}", file=sys.stderr)
+        print(f"Error in main: {redact_sensitive_text(str(e))}", file=sys.stderr)
         import traceback
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)

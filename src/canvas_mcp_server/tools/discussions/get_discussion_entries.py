@@ -44,7 +44,11 @@ async def get_discussion_entries(
         )
         if not isinstance(response.data, dict):
             raise Exception("Canvas discussion view response was not an object")
-        return discussion_entries_from_view(response.data)
+        return discussion_entries_from_view(
+            response.data,
+            course_id=course_id,
+            discussion_id=discussion_id,
+        )
 
     except Exception as e:
         return as_discussion_tool_error(e, source="canvas_rest")

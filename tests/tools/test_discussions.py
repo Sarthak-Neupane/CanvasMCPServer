@@ -81,6 +81,10 @@ async def test_get_discussion_success(canvas_api: CanvasAPIMock) -> None:
     assert result.title == "Week 1 discussion"
     assert result.message_text == "Introduce yourself."
     assert result.require_initial_post is True
+    assert result.source_type == "discussion"
+    assert result.course_id == "100001"
+    assert result.canvas_url is not None
+    assert result.canvas_url.endswith("/courses/100001/discussion_topics/400001")
 
 
 async def test_get_discussion_entries_success(canvas_api: CanvasAPIMock) -> None:
@@ -98,6 +102,11 @@ async def test_get_discussion_entries_success(canvas_api: CanvasAPIMock) -> None
     assert len(result.entries[0].replies) == 1
     assert result.entries[0].replies[0].author_name == "Student Two"
     assert result.unread_entry_ids == [12]
+    assert result.entries[0].source_type == "discussion_entry"
+    assert result.entries[0].course_id == "100001"
+    assert result.entries[0].canvas_url == (
+        "/courses/100001/discussion_topics/400001/entries/11"
+    )
 
 
 async def test_get_discussion_entries_require_initial_post(

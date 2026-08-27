@@ -7,6 +7,7 @@ from pydantic import Field
 
 from ...models import AssignmentDetail
 from ...errors import as_tool_error
+from ...utils.content_metadata import attach_content_metadata
 from ...utils import canvas_api_client, extract_graphql_data
 
 AssignmentDetailResponse: TypeAlias = Union[AssignmentDetail, Dict[str, Any]]
@@ -61,7 +62,15 @@ async def get_assignment_details(
         assignment = data.get("assignment")
         if assignment is None:
             raise Exception(f"No assignment found for id: {assignment_id}")
-        return AssignmentDetail.model_validate(assignment)
+        detail = AssignmentDetail.model_validate(assignment)
+        course_id = str((assignment.get("course") or {}).get("_id") or "")
+        return attach_content_metadata(
+            detail,
+            source_type="assignment",
+            course_id=course_id or str(detail.id),
+            resource_id=str(detail.id),
+            canvas_url=detail.htmlUrl,
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_graphql")

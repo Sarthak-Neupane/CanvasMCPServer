@@ -161,6 +161,19 @@ serialize as JSON `null`.
 
 Details: [docs/output-conventions.md](docs/output-conventions.md).
 
+## Security & privacy
+
+Canvas HTML is converted to plain text and **never executed** in this server.
+Content tools attach provenance metadata (`source_type`, `course_id`,
+`resource_id`, `canvas_url`) so agents can treat bodies as untrusted. API
+tokens are redacted from error strings and URLs where possible.
+
+Student-scoped tokens only receive the authenticated user's grades and
+submissions; classmate roster leaks from Canvas are filtered out.
+
+Details: [SECURITY.md](SECURITY.md). Privacy regression tests:
+`uv run pytest -m privacy`.
+
 ## Usage
 
 ### Standalone

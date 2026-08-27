@@ -68,6 +68,9 @@ async def test_get_page_by_slug(canvas_api: CanvasAPIMock) -> None:
     assert "Week 1" in result.body_text
     assert "Read chapter 1." in result.body_text
     assert "bad()" not in result.body_text
+    assert result.source_type == "page"
+    assert result.course_id == "100001"
+    assert result.canvas_url == "/courses/100001/pages/week-1-overview"
 
 
 async def test_get_page_by_full_canvas_path(canvas_api: CanvasAPIMock) -> None:

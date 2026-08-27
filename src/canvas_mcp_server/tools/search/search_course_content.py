@@ -72,6 +72,8 @@ async def search_course_content(
                     course_id=document.course_id,
                     resource_id=document.resource_id,
                     url=document.url,
+                    source_type=document.content_type,
+                    canvas_url=document.url,
                 )
             )
         return list_result(results, truncated=truncated)

@@ -4,6 +4,8 @@ from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..common.untrusted_content import UntrustedContentMixin
+
 
 class DiscussionParticipant(BaseModel):
     """Author metadata from a discussion view response."""
@@ -20,7 +22,7 @@ class DiscussionParticipant(BaseModel):
     ] = None
 
 
-class DiscussionEntry(BaseModel):
+class DiscussionEntry(UntrustedContentMixin):
     """One discussion post, with nested replies when threaded."""
 
     model_config = ConfigDict(populate_by_name=True)

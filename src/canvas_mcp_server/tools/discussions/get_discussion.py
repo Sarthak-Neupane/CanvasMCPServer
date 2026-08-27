@@ -10,6 +10,7 @@ from pydantic import Field
 
 from ...errors import as_discussion_tool_error
 from ...models import DiscussionDetail
+from ...utils.content_metadata import attach_content_metadata
 from ...utils import canvas_api_client
 from ...utils.html import html_to_text
 
@@ -45,10 +46,16 @@ async def get_discussion(
 
         detail = DiscussionDetail.model_validate(response.data)
         if detail.message:
-            return detail.model_copy(
+            detail = detail.model_copy(
                 update={"message_text": html_to_text(detail.message)}
             )
-        return detail
+        return attach_content_metadata(
+            detail,
+            source_type="discussion",
+            course_id=course_id,
+            resource_id=str(detail.discussion_id or discussion_id),
+            canvas_url=detail.html_url,
+        )
 
     except Exception as e:
         return as_discussion_tool_error(e, source="canvas_rest")

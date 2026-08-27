@@ -18,3 +18,16 @@ SYLLABUS_HTML = """
 <h1>Syllabus</h1>
 <p>Assignments live in <a href="/courses/100001/assignments/200001">Homework 1</a>.</p>
 """
+
+DANGEROUS_HTML = """
+<div>
+  <iframe src="https://evil.example/embed">iframe text</iframe>
+  <object data="evil.swf">object text</object>
+  <embed src="evil.swf">embed text</embed>
+  <noscript>noscript text</noscript>
+  <template>template text</template>
+  <svg><title>svg title</title></svg>
+  <a href="javascript:alert(1)">bad link</a>
+  <p>visible paragraph</p>
+</div>
+"""

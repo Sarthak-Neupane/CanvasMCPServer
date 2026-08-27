@@ -10,6 +10,7 @@ from pydantic import Field
 
 from ...models import PageDetail
 from ...errors import as_tool_error
+from ...utils.content_metadata import attach_content_metadata
 from ...utils import canvas_api_client
 from ...utils.html import html_to_text
 from ._params import page_endpoint_segment
@@ -51,8 +52,16 @@ async def get_page(
 
         detail = PageDetail.model_validate(response.data)
         if detail.body:
-            return detail.model_copy(update={"body_text": html_to_text(detail.body)})
-        return detail
+            detail = detail.model_copy(update={"body_text": html_to_text(detail.body)})
+        resource_id = detail.url or (
+            str(detail.page_id) if detail.page_id is not None else segment
+        )
+        return attach_content_metadata(
+            detail,
+            source_type="page",
+            course_id=course_id,
+            resource_id=resource_id,
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

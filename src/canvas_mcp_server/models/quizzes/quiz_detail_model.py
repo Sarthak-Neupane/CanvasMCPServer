@@ -4,10 +4,11 @@ from typing import Annotated, List, Optional
 
 from pydantic import Field
 
+from ..common.untrusted_content import UntrustedContentMixin
 from .quiz_summary_model import QuizSummary
 
 
-class QuizDetail(QuizSummary):
+class QuizDetail(QuizSummary, UntrustedContentMixin):
     """Full quiz metadata including description (no question content)."""
 
     description: Annotated[

@@ -45,6 +45,9 @@ async def test_search_course_content_pages_and_syllabus(
     assert "page" in types
     assert result.results[0].score >= result.results[-1].score
     assert all(item.snippet is not None for item in result.results)
+    for item in result.results:
+        assert item.source_type == item.content_type
+        assert item.canvas_url == item.url
 
 
 async def test_search_course_content_invalid_type(canvas_api: CanvasAPIMock) -> None:

@@ -2,8 +2,10 @@ from typing import Annotated, Optional
 
 from pydantic import BaseModel, Field
 
+from ..common.untrusted_content import UntrustedContentMixin
 
-class CourseSyllabus(BaseModel):
+
+class CourseSyllabus(UntrustedContentMixin):
     """Course syllabus content from the Canvas REST Courses API."""
 
     course_id: Annotated[
