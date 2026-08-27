@@ -281,6 +281,18 @@ top-level query for todo items or upcoming events — those are REST-only.
   returns threaded `view` entries plus `participants` and `unread_entries`; may
   respond `403` with body `require_initial_post` when the user must post before
   viewing replies.
+- **Quizzes (REST, classic)**: `GET /api/v1/courses/:course_id/quizzes` and
+  `GET .../quizzes/:id` return metadata only (due dates, time limits, attempt
+  policy, lock state, `question_count`, `question_types` labels). Optional
+  `search_term` on list. Tools strip `access_code` and expose
+  `requires_access_code` instead; `ip_filter` becomes `has_ip_filter`. Does not
+  fetch question text or answers. New Quizzes may use a separate API — classic
+  endpoint is what most institutions still expose via this path.
+- **Rubrics**: `GET /api/v1/courses/:course_id/assignments/:assignment_id`
+  with `include[]=rubric` returns `rubric` (criteria + ratings),
+  `rubric_settings.points_possible`, and `use_rubric_for_grading`. Does not
+  include student assessment scores — those appear on submissions with
+  `include[]=rubric_assessment` (see P3.4 submission feedback).
 
 ### REST-only endpoints needed by tools
 

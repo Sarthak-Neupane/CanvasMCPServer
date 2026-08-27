@@ -52,6 +52,11 @@ from .modules.module_summary_model import ModuleSummary
 from .pages.page_detail_model import PageDetail
 from .pages.page_summary_model import PageSummary
 from .planner.planner_item_model import PlannerItem, PlannerSubmissionStatus
+from .quizzes.quiz_detail_model import QuizDetail
+from .quizzes.quiz_summary_model import QuizSummary
+from .rubrics.rubric_criterion_model import RubricCriterion
+from .rubrics.rubric_model import Rubric
+from .rubrics.rubric_rating_model import RubricRating
 from .todos.todo_item_model import TodoAssignmentRef, TodoItem
 
 __all__: Final[List[str]] = [
@@ -113,4 +118,11 @@ __all__: Final[List[str]] = [
     # Planner
     "PlannerItem",
     "PlannerSubmissionStatus",
+    # Quizzes
+    "QuizSummary",
+    "QuizDetail",
+    # Rubrics
+    "Rubric",
+    "RubricCriterion",
+    "RubricRating",
 ]
