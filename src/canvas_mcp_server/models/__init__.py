@@ -9,6 +9,7 @@ from .courses.course_calendar_model import CalendarLink
 from .courses.course_detail_model import CourseDetail
 from .courses.course_progress_model import CourseProgress
 from .courses.course_summary_model import CourseSummary
+from .courses.course_syllabus_model import CourseSyllabus
 from .courses.course_term_model import Term
 from .grades.course_grades_model import (
     CourseGrades,
@@ -37,6 +38,7 @@ __all__: Final[List[str]] = [
     "CourseProgress",
     "Term",
     "CourseSummary",
+    "CourseSyllabus",
     # Assignments
     "AssignmentSummary",
     "AssignmentDetail",

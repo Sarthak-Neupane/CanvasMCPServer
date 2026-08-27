@@ -286,8 +286,12 @@ top-level query for todo items or upcoming events — those are REST-only.
   on single-item show (or when intentionally expanding items) for points,
   due/lock dates, and lock_explanation. Student callers get module `state` /
   `completed_at` and `completion_requirement.completed` on items when
-  applicable. Item `type` is one of File, Page, Discussion, Assignment, Quiz,
+  applicable.   Item `type` is one of File, Page, Discussion, Assignment, Quiz,
   SubHeader, ExternalUrl, ExternalTool.
+- **Syllabus**: `GET /api/v1/courses/:course_id` with `include[]=syllabus_body`
+  returns `syllabus_body` (HTML). `syllabus_course_summary` may appear on the
+  course object when Canvas exposes it (controls whether the assignment/calendar
+  summary block is shown on the syllabus page).
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)
