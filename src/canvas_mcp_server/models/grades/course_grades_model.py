@@ -68,8 +68,10 @@ class CourseGrades(BaseModel):
         List[EnrollmentGrade],
         Field(
             description=(
-                "Visible student enrollments with grades. Students see only "
-                "their own enrollment; teachers see all students."
+                "Visible student enrollments with grades. Without "
+                "viewAllGrades/manageGrades, this is only the caller's own "
+                "enrollment (classmate rosters are never included). Teachers "
+                "with grade permission see all students."
             ),
         ),
     ]

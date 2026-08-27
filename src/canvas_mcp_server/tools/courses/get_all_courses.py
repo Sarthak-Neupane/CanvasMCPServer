@@ -1,6 +1,6 @@
 """Tool for listing all Canvas courses via the GraphQL API."""
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated, Set
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
@@ -48,6 +48,20 @@ def _rest_course_to_summary(course: Dict[str, Any]) -> CourseSummary:
     )
 
 
+async def _dashboard_course_ids() -> Set[str]:
+    """
+    Return course ids that appear on the user's Canvas dashboard.
+
+    enrollment_state=active is weaker than this: Canvas can keep old or
+    open-ended enrollments marked active long after they leave the dashboard.
+    """
+    response = await canvas_api_client.get_rest("v1/dashboard/dashboard_cards")
+    cards = response.data
+    if not isinstance(cards, list):
+        raise Exception("Canvas dashboard_cards response was not a list")
+    return {str(card["id"]) for card in cards if isinstance(card, dict) and "id" in card}
+
+
 async def get_all_courses(
     term: Annotated[
         Optional[str],
@@ -63,12 +77,13 @@ async def get_all_courses(
         bool,
         Field(
             description=(
-                "When true, return only the courses the user is currently "
-                "actively enrolled in (enrollment_state=active). This matches "
-                "the 'current courses' shown on the Canvas dashboard and is the "
-                "right choice for questions like 'what am I taking this "
-                "semester?'. When false (default), every course the user can "
-                "access is returned, spanning all past and present terms."
+                "When true, return only the courses on the user's Canvas "
+                "dashboard (GET /api/v1/dashboard/dashboard_cards). This is "
+                "what 'current courses' / 'this semester' usually means. It "
+                "is stricter than enrollment_state=active, which can still "
+                "include concluded or open-ended enrollments. When false "
+                "(default), every course the user can access is returned, "
+                "spanning all past and present terms."
             ),
         ),
     ] = False,
@@ -77,17 +92,19 @@ async def get_all_courses(
     Get Canvas courses for the current user.
 
     By default, returns every course the user can access across all terms. Set
-    active_only=True to return only currently active enrollments (the courses on
-    the user's Canvas dashboard), which is what "current"/"this semester" means.
-    Both modes can be further narrowed with the term filter.
+    active_only=True to return only courses on the Canvas dashboard (not merely
+    enrollment_state=active). Both modes can be further narrowed with the term
+    filter.
 
     Returns a list of course summaries (id, name, course code, term),
     or an error object with "error", "message", and optionally "status_code" keys.
     """
     try:
         if active_only:
-            # The GraphQL allCourses field has no active-enrollment filter, so we
-            # use the REST courses endpoint, which mirrors the dashboard.
+            # Dashboard cards are the contract for "current" courses. Hydrate
+            # with REST /v1/courses (+ term) so summaries keep the same shape
+            # as the non-active path.
+            dashboard_ids = await _dashboard_course_ids()
             rest_response = await canvas_api_client.get_rest(
                 "v1/courses",
                 params={
@@ -99,7 +116,13 @@ async def get_all_courses(
             course_list = rest_response.data
             if not isinstance(course_list, list):
                 raise Exception("Canvas REST courses response was not a list")
-            courses = [_rest_course_to_summary(course) for course in course_list]
+            courses = [
+                _rest_course_to_summary(course)
+                for course in course_list
+                if isinstance(course, dict)
+                and str(course.get("id")) in dashboard_ids
+                and not course.get("access_restricted_by_date")
+            ]
         else:
             response = await canvas_api_client.post_graphql_query(GRAPHQL_QUERY)
             data = extract_graphql_data(response)
@@ -132,9 +155,9 @@ get_all_courses_tool: Final[Tool] = Tool.from_function(
     description=(
         "List Canvas courses for the current user with summary fields "
         "(id, name, course code, term). Set active_only=true to return only "
-        "the user's currently active courses (what shows on the Canvas "
-        "dashboard) -- use this for 'my current courses' or 'what am I taking "
-        "this semester'. Optionally filter by term name, e.g. 'Fall 2025'."
+        "courses on the Canvas dashboard (current courses / this semester) — "
+        "not every enrollment_state=active course. Optionally filter by term "
+        "name, e.g. 'Fall 2025'."
     ),
     fn=get_all_courses,
 )

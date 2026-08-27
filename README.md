@@ -17,20 +17,24 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 
 | Tool | Description |
 | --- | --- |
-| `get_all_courses` | List courses for the current user (id, name, course code, term). Set `active_only=true` for just your current courses (what shows on the Canvas dashboard). Optional `term` filter, e.g. `"Fall 2025"`. |
+| `get_all_courses` | List courses for the current user (id, name, course code, term). Set `active_only=true` for dashboard courses only (stricter than `enrollment_state=active`). Optional `term` filter, e.g. `"Fall 2025"`. |
 | `get_course_by_id` | Get details for a single course by numeric ID or GraphQL global ID. |
 | `get_upcoming_assignments` | List upcoming assignments across all courses with due dates and points. |
 | `get_assignments_for_course` | List all assignments in a course (name, due date, points, state, URL). |
 | `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
 | `get_todo_items` | List the user's todo items: assignments to submit (students) or grade (teachers). |
 | `get_submission_status` | Check submission status for an assignment: submitted/late/missing, score and grade. Students see their own; teachers see all. |
-| `get_course_grades` | Get current and final scores/grades for a course. Students see their own; teachers see all students. |
+| `get_course_grades` | Get current and final scores/grades for a course. Students see only their own enrollment (no classmate roster); teachers with grade permission see all students. |
 | `get_announcements` | List a course's announcements (title, message, post date, author). |
+| `get_course_modules` | List modules in a course (structure only: name, position, unlock date, item count, student progression). Optional `search_term`. |
+| `get_module_items` | List items in a module (File, Page, Assignment, Quiz, etc.) with completion requirements. Optional `search_term`. |
+| `get_module_item_details` | Get one module item with `content_details` (points, due/lock dates, lock explanation). |
 
 Course, assignment, submission, grade, and announcement data comes from the
 [Canvas GraphQL API](https://developerdocs.instructure.com/services/canvas/basics/file.graphql);
-todo items and upcoming assignments use the REST API since GraphQL does not
-expose them.
+todo items, upcoming assignments, dashboard (`active_only`) course lists, and
+modules use the REST API where GraphQL does not expose them (or where REST is
+the accurate source of truth).
 
 ## Requirements
 

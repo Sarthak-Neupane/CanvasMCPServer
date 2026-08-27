@@ -244,7 +244,12 @@ top-level query for todo items or upcoming events — those are REST-only.
 ### Grades / enrollments
 
 - `course(id:) { enrollmentsConnection(filter: { userIds, types, states }) { nodes { ... } } }`
-  Requires read_roster/read_grades; students are auto-scoped to themselves.
+  Requires read_roster/read_grades. **Do not assume students are auto-scoped**:
+  omitting `userIds` can still return the full student roster (names) to a
+  student token, even when other students' `grades` fields are null. Always
+  pass `userIds: [<self>]` unless `course.permissions.viewAllGrades` or
+  `manageGrades` is true.
+- Check grade scope via `course(id:) { permissions { viewAllGrades manageGrades } }`.
 - Enrollment fields: `_id`, `type` (StudentEnrollment...), `state`,
   `user { _id name }`, `grades { currentScore currentGrade finalScore
   finalGrade unpostedCurrentScore unpostedCurrentGrade overrideScore overrideGrade }`.
@@ -268,6 +273,21 @@ top-level query for todo items or upcoming events — those are REST-only.
   events and assignments mixed; assignment entries carry an `assignment`
   object (`id`, `name`, `due_at`, `points_possible`, `html_url`,
   `course_id`) plus `context_code` like `course_12942`.
+- **Dashboard / current courses**: `GET /api/v1/dashboard/dashboard_cards` —
+  the courses shown on the Canvas dashboard. Prefer this over
+  `GET /api/v1/courses?enrollment_state=active`, which can still include
+  concluded or open-ended enrollments that are not on the dashboard. Use
+  `include[]=concluded` on courses if you need the concluded flag explicitly.
+- **Modules**: `GET /api/v1/courses/:course_id/modules`,
+  `.../modules/:module_id/items`, `.../items/:id`. Optional `search_term` on
+  list endpoints. For structure-only listing, do **not** pass
+  `include[]=items` (Canvas may omit large item arrays anyway — always be
+  prepared to call List Module Items). Request `include[]=content_details` only
+  on single-item show (or when intentionally expanding items) for points,
+  due/lock dates, and lock_explanation. Student callers get module `state` /
+  `completed_at` and `completion_requirement.completed` on items when
+  applicable. Item `type` is one of File, Page, Discussion, Assignment, Quiz,
+  SubHeader, ExternalUrl, ExternalTool.
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)

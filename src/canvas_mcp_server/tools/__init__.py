@@ -11,6 +11,11 @@ from .assignments import (
 )
 from .courses import get_all_courses_tool, get_course_by_id_tool
 from .grades import get_course_grades_tool
+from .modules import (
+    get_course_modules_tool,
+    get_module_item_details_tool,
+    get_module_items_tool,
+)
 from .submissions import get_submission_status_tool
 from .todos import get_todo_items_tool
 
@@ -24,6 +29,9 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_submission_status_tool,
     get_course_grades_tool,
     get_announcements_tool,
+    get_course_modules_tool,
+    get_module_items_tool,
+    get_module_item_details_tool,
 ]
 
 __all__: Final[List[str]] = [
@@ -37,4 +45,7 @@ __all__: Final[List[str]] = [
     "get_submission_status_tool",
     "get_course_grades_tool",
     "get_announcements_tool",
+    "get_course_modules_tool",
+    "get_module_items_tool",
+    "get_module_item_details_tool",
 ]

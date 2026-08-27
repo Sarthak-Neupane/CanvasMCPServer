@@ -21,6 +21,13 @@ from .submissions.submission_status_model import (
     SubmissionStatus,
     SubmissionUserRef,
 )
+from .modules.module_item_model import (
+    CompletionRequirement,
+    ContentDetails,
+    ModuleItemDetail,
+    ModuleItemSummary,
+)
+from .modules.module_summary_model import ModuleSummary
 from .todos.todo_item_model import TodoAssignmentRef, TodoItem
 
 __all__: Final[List[str]] = [
@@ -50,4 +57,10 @@ __all__: Final[List[str]] = [
     # Todos
     "TodoItem",
     "TodoAssignmentRef",
+    # Modules
+    "ModuleSummary",
+    "ModuleItemSummary",
+    "ModuleItemDetail",
+    "CompletionRequirement",
+    "ContentDetails",
 ]

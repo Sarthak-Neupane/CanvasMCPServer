@@ -2,11 +2,14 @@
 
 import os
 import sys
+from pathlib import Path
 from typing import Dict
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load .env from the project root (two levels above this file), independent
+# of the launcher's working directory. Falls back to cwd-based lookup.
+_PROJECT_ROOT_ENV = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(_PROJECT_ROOT_ENV if _PROJECT_ROOT_ENV.exists() else None)
 
 
 class Config:
