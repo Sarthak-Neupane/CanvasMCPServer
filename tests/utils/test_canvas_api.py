@@ -1,5 +1,7 @@
 """Tests for Canvas API client download behavior."""
 
+from unittest.mock import AsyncMock, patch
+
 import httpx
 import pytest
 import respx
@@ -130,3 +132,90 @@ async def test_get_rest_paginated_follows_link_header(
     assert len(items) == 2
     assert items[0]["id"] == 1
     assert items[1]["id"] == 2
+
+
+@respx.mock
+async def test_get_rest_retries_on_429(canvas_download_config, monkeypatch) -> None:
+    monkeypatch.setattr(Config, "CANVAS_MAX_RETRIES", 2)
+    monkeypatch.setattr(Config, "CANVAS_RETRY_BASE_DELAY", 0.01)
+    url = "https://canvas.example.edu/api/v1/users/self/profile"
+    route = respx.get(url).mock(
+        side_effect=[
+            httpx.Response(429, headers={"Retry-After": "0"}),
+            httpx.Response(200, json={"id": 1, "name": "Student"}),
+        ]
+    )
+
+    with patch(
+        "canvas_mcp_server.utils.http_client.sleep_before_retry",
+        new_callable=AsyncMock,
+    ):
+        response = await canvas_api_client.get_rest("v1/users/self/profile")
+
+    assert response.data["id"] == 1
+    assert route.call_count == 2
+
+
+@respx.mock
+async def test_get_rest_does_not_retry_on_403(canvas_download_config) -> None:
+    url = "https://canvas.example.edu/api/v1/users/self/profile"
+    route = respx.get(url).mock(return_value=httpx.Response(403, text="Forbidden"))
+
+    with pytest.raises(HTTPError, match="access forbidden"):
+        await canvas_api_client.get_rest("v1/users/self/profile")
+
+    assert route.call_count == 1
+
+
+@respx.mock
+async def test_get_rest_retries_network_error(
+    canvas_download_config,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(Config, "CANVAS_MAX_RETRIES", 2)
+    monkeypatch.setattr(Config, "CANVAS_RETRY_BASE_DELAY", 0.01)
+    url = "https://canvas.example.edu/api/v1/users/self/profile"
+    call_count = 0
+
+    def flaky_response(request: httpx.Request) -> httpx.Response:
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise httpx.ConnectError("connection reset")
+        return httpx.Response(200, json={"id": 1})
+
+    route = respx.get(url).mock(side_effect=flaky_response)
+
+    with patch(
+        "canvas_mcp_server.utils.http_client.sleep_before_retry",
+        new_callable=AsyncMock,
+    ):
+        response = await canvas_api_client.get_rest("v1/users/self/profile")
+
+    assert response.data["id"] == 1
+    assert route.call_count == 2
+
+
+@respx.mock
+async def test_download_file_bytes_retries_on_503(
+    canvas_download_config,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(Config, "CANVAS_MAX_RETRIES", 2)
+    monkeypatch.setattr(Config, "CANVAS_RETRY_BASE_DELAY", 0.01)
+    url = "https://canvas.example.edu/files/500001/download"
+    route = respx.get(url).mock(
+        side_effect=[
+            httpx.Response(503, text="Unavailable"),
+            httpx.Response(200, content=FILE_BYTES),
+        ]
+    )
+
+    with patch(
+        "canvas_mcp_server.utils.retry_policy.sleep_before_retry",
+        new_callable=AsyncMock,
+    ):
+        content = await canvas_api_client.download_file_bytes(url)
+
+    assert content == FILE_BYTES
+    assert route.call_count == 2

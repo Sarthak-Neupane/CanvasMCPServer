@@ -125,6 +125,8 @@ pip install -e .
 | `CANVAS_DOWNLOAD_DIR` | no | `~/Downloads/Canvas` | Root directory for downloaded files |
 | `CANVAS_DOWNLOAD_TIMEOUT` | no | same as `CANVAS_TIMEOUT` | Timeout for binary file downloads |
 | `CANVAS_MAX_DOWNLOAD_SIZE_MB` | no | `100` | Maximum size (MB) for a single file download |
+| `CANVAS_MAX_RETRIES` | no | `3` | Retries after the first attempt for 429/5xx/network errors |
+| `CANVAS_RETRY_BASE_DELAY` | no | `1.0` | Base seconds for exponential backoff between retries |
 | `DEBUG` | no | `false` | Enable debug mode |
 | `LOG_LEVEL` | no | `INFO` | Log level |
 

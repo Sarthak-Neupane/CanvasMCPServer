@@ -32,6 +32,10 @@ class Config:
     CANVAS_MAX_DOWNLOAD_SIZE_MB: int = int(
         os.getenv("CANVAS_MAX_DOWNLOAD_SIZE_MB", "100")
     )
+    CANVAS_MAX_RETRIES: int = int(os.getenv("CANVAS_MAX_RETRIES", "3"))
+    CANVAS_RETRY_BASE_DELAY: float = float(
+        os.getenv("CANVAS_RETRY_BASE_DELAY", "1.0")
+    )
     
     # Debug Configuration
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
@@ -108,6 +112,16 @@ class Config:
             int: Size cap from CANVAS_MAX_DOWNLOAD_SIZE_MB.
         """
         return cls.CANVAS_MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
+
+    @classmethod
+    def get_max_retries(cls) -> int:
+        """Maximum number of retries after the initial HTTP attempt."""
+        return cls.CANVAS_MAX_RETRIES
+
+    @classmethod
+    def get_retry_base_delay(cls) -> float:
+        """Base delay in seconds for exponential HTTP retry backoff."""
+        return cls.CANVAS_RETRY_BASE_DELAY
 
     @classmethod
     def get_download_headers(cls) -> Dict[str, str]:

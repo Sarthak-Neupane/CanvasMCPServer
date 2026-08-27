@@ -8,6 +8,11 @@ from typing import Dict, Any, List, Optional
 from ..config import config
 from .http_client import BaseHTTPClient, HTTPResponse, HTTPError
 from .rest_pagination import DEFAULT_MAX_PAGES, DEFAULT_PER_PAGE, parse_link_header
+from .retry_policy import (
+    compute_retry_delay,
+    should_retry_status,
+    sleep_before_retry,
+)
 
 
 class CanvasAPIClient(BaseHTTPClient):
@@ -267,61 +272,110 @@ class CanvasAPIClient(BaseHTTPClient):
             ephemeral_client = True
 
         try:
-            async with http_client.stream("GET", url, headers=headers) as response:
-                if not (200 <= response.status_code < 300):
-                    body_preview = ""
-                    async for chunk in response.aiter_bytes():
-                        body_preview += chunk.decode("utf-8", errors="replace")
-                        if len(body_preview) >= 500:
-                            break
-                    raise HTTPError(
-                        f"HTTP {response.status_code} error",
-                        status_code=response.status_code,
-                        response_data=body_preview,
-                        url=url,
-                    )
+            max_attempts = config.get_max_retries() + 1
+            base_delay = config.get_retry_base_delay()
 
-                content_length = response.headers.get("content-length")
-                if content_length is not None:
-                    try:
-                        declared_size = int(content_length)
-                    except ValueError:
-                        declared_size = None
-                    if declared_size is not None and declared_size > byte_limit:
-                        raise HTTPError(
-                            f"File exceeds maximum download size of "
-                            f"{byte_limit} bytes",
-                            status_code=response.status_code,
-                            url=url,
-                        )
-
-                bytes_written = 0
-                destination.parent.mkdir(parents=True, exist_ok=True)
+            for attempt in range(max_attempts):
+                retry_after_header: Optional[str] = None
+                retryable_status = False
                 try:
-                    with destination.open("wb") as handle:
-                        async for chunk in response.aiter_bytes():
-                            bytes_written += len(chunk)
-                            if bytes_written > byte_limit:
+                    async with http_client.stream(
+                        "GET",
+                        url,
+                        headers=headers,
+                    ) as response:
+                        if not (200 <= response.status_code < 300):
+                            if (
+                                should_retry_status(response.status_code)
+                                and attempt < max_attempts - 1
+                            ):
+                                retryable_status = True
+                                retry_after_header = response.headers.get(
+                                    "Retry-After"
+                                )
+                            else:
+                                body_preview = ""
+                                async for chunk in response.aiter_bytes():
+                                    body_preview += chunk.decode(
+                                        "utf-8",
+                                        errors="replace",
+                                    )
+                                    if len(body_preview) >= 500:
+                                        break
                                 raise HTTPError(
-                                    f"File exceeds maximum download size of "
-                                    f"{byte_limit} bytes",
+                                    f"HTTP {response.status_code} error",
                                     status_code=response.status_code,
+                                    response_data=body_preview,
                                     url=url,
                                 )
-                            handle.write(chunk)
-                except Exception:
-                    destination.unlink(missing_ok=True)
-                    raise
+                        else:
+                            content_length = response.headers.get("content-length")
+                            if content_length is not None:
+                                try:
+                                    declared_size = int(content_length)
+                                except ValueError:
+                                    declared_size = None
+                                if (
+                                    declared_size is not None
+                                    and declared_size > byte_limit
+                                ):
+                                    raise HTTPError(
+                                        f"File exceeds maximum download size of "
+                                        f"{byte_limit} bytes",
+                                        status_code=response.status_code,
+                                        url=url,
+                                    )
 
-                return bytes_written
-        except httpx.TimeoutException:
-            destination.unlink(missing_ok=True)
-            raise HTTPError(
-                f"Download timeout after {request_timeout}s", url=url
-            ) from None
-        except httpx.NetworkError as e:
-            destination.unlink(missing_ok=True)
-            raise HTTPError(f"Network error: {str(e)}", url=url) from e
+                            bytes_written = 0
+                            destination.parent.mkdir(parents=True, exist_ok=True)
+                            try:
+                                with destination.open("wb") as handle:
+                                    async for chunk in response.aiter_bytes():
+                                        bytes_written += len(chunk)
+                                        if bytes_written > byte_limit:
+                                            raise HTTPError(
+                                                f"File exceeds maximum download size of "
+                                                f"{byte_limit} bytes",
+                                                status_code=response.status_code,
+                                                url=url,
+                                            )
+                                        handle.write(chunk)
+                            except Exception:
+                                destination.unlink(missing_ok=True)
+                                raise
+
+                            return bytes_written
+                except httpx.TimeoutException:
+                    destination.unlink(missing_ok=True)
+                    if attempt >= max_attempts - 1:
+                        raise HTTPError(
+                            f"Download timeout after {request_timeout}s",
+                            url=url,
+                        ) from None
+                    await sleep_before_retry(
+                        compute_retry_delay(attempt, None, base_delay=base_delay)
+                    )
+                    continue
+                except httpx.NetworkError as e:
+                    destination.unlink(missing_ok=True)
+                    if attempt >= max_attempts - 1:
+                        raise HTTPError(f"Network error: {str(e)}", url=url) from e
+                    await sleep_before_retry(
+                        compute_retry_delay(attempt, None, base_delay=base_delay)
+                    )
+                    continue
+
+                if retryable_status:
+                    await sleep_before_retry(
+                        compute_retry_delay(
+                            attempt,
+                            retry_after_header,
+                            base_delay=base_delay,
+                        )
+                    )
+                    continue
+
+            raise HTTPError("Download failed after retries", url=url)
         finally:
             if ephemeral_client:
                 await http_client.aclose()
@@ -361,25 +415,58 @@ class CanvasAPIClient(BaseHTTPClient):
             ephemeral_client = True
 
         try:
-            response = await http_client.get(
-                url,
-                headers=headers,
-                timeout=request_timeout,
-            )
-            if not (200 <= response.status_code < 300):
+            max_attempts = config.get_max_retries() + 1
+            base_delay = config.get_retry_base_delay()
+
+            for attempt in range(max_attempts):
+                try:
+                    response = await http_client.get(
+                        url,
+                        headers=headers,
+                        timeout=request_timeout,
+                    )
+                except httpx.TimeoutException:
+                    if attempt >= max_attempts - 1:
+                        raise HTTPError(
+                            f"Download timeout after {request_timeout}s",
+                            url=url,
+                        ) from None
+                    await sleep_before_retry(
+                        compute_retry_delay(attempt, None, base_delay=base_delay)
+                    )
+                    continue
+                except httpx.NetworkError as e:
+                    if attempt >= max_attempts - 1:
+                        raise HTTPError(f"Network error: {str(e)}", url=url) from e
+                    await sleep_before_retry(
+                        compute_retry_delay(attempt, None, base_delay=base_delay)
+                    )
+                    continue
+
+                if 200 <= response.status_code < 300:
+                    return response.content
+
+                if (
+                    should_retry_status(response.status_code)
+                    and attempt < max_attempts - 1
+                ):
+                    await sleep_before_retry(
+                        compute_retry_delay(
+                            attempt,
+                            response.headers.get("Retry-After"),
+                            base_delay=base_delay,
+                        )
+                    )
+                    continue
+
                 raise HTTPError(
                     f"HTTP {response.status_code} error",
                     status_code=response.status_code,
                     response_data=response.text[:500],
                     url=url,
                 )
-            return response.content
-        except httpx.TimeoutException:
-            raise HTTPError(
-                f"Download timeout after {request_timeout}s", url=url
-            ) from None
-        except httpx.NetworkError as e:
-            raise HTTPError(f"Network error: {str(e)}", url=url) from e
+
+            raise HTTPError("Download failed after retries", url=url)
         finally:
             if ephemeral_client:
                 await http_client.aclose()

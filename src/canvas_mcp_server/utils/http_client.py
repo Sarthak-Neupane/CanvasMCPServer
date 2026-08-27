@@ -4,6 +4,13 @@ from typing import Dict, Any, List, Optional, Union
 from dataclasses import dataclass
 import httpx
 
+from ..config import config
+from .retry_policy import (
+    compute_retry_delay,
+    should_retry_status,
+    sleep_before_retry,
+)
+
 
 @dataclass
 class HTTPResponse:
@@ -101,6 +108,7 @@ class BaseHTTPClient:
         response: httpx.Response,
         *,
         url: str,
+        raise_on_error: bool = True,
     ) -> HTTPResponse:
         """Convert an httpx response into the shared HTTPResponse wrapper."""
         try:
@@ -115,7 +123,7 @@ class BaseHTTPClient:
             url=str(response.url),
         )
 
-        if not http_response.is_success:
+        if not http_response.is_success and raise_on_error:
             error_msg = f"HTTP {response.status_code} error"
             if isinstance(response_data, dict) and "message" in response_data:
                 error_msg += f": {response_data['message']}"
@@ -144,27 +152,70 @@ class BaseHTTPClient:
     ) -> HTTPResponse:
         merged_headers = self._merge_headers(headers)
         request_timeout = timeout or self.timeout
+        max_attempts = config.get_max_retries() + 1
+        base_delay = config.get_retry_base_delay()
 
-        try:
-            response = await client.request(
-                method=method,
+        for attempt in range(max_attempts):
+            try:
+                response = await client.request(
+                    method=method,
+                    url=url,
+                    params=params,
+                    json=json_data,
+                    headers=merged_headers,
+                    timeout=request_timeout,
+                )
+            except httpx.TimeoutException:
+                if attempt >= max_attempts - 1:
+                    raise HTTPError(
+                        f"Request timeout after {request_timeout}s",
+                        url=url,
+                    )
+                await sleep_before_retry(
+                    compute_retry_delay(attempt, None, base_delay=base_delay)
+                )
+                continue
+            except httpx.NetworkError as e:
+                if attempt >= max_attempts - 1:
+                    raise HTTPError(f"Network error: {str(e)}", url=url)
+                await sleep_before_retry(
+                    compute_retry_delay(attempt, None, base_delay=base_delay)
+                )
+                continue
+            except httpx.HTTPStatusError as e:
+                raise HTTPError(
+                    f"HTTP error: {e.response.status_code}",
+                    status_code=e.response.status_code,
+                    url=url,
+                )
+
+            if response.is_success:
+                return self._http_response_from_httpx(
+                    response,
+                    url=url,
+                    raise_on_error=True,
+                )
+
+            if (
+                should_retry_status(response.status_code)
+                and attempt < max_attempts - 1
+            ):
+                await sleep_before_retry(
+                    compute_retry_delay(
+                        attempt,
+                        response.headers.get("Retry-After"),
+                        base_delay=base_delay,
+                    )
+                )
+                continue
+
+            return self._http_response_from_httpx(
+                response,
                 url=url,
-                params=params,
-                json=json_data,
-                headers=merged_headers,
-                timeout=request_timeout,
+                raise_on_error=True,
             )
-            return self._http_response_from_httpx(response, url=url)
-        except httpx.TimeoutException:
-            raise HTTPError(f"Request timeout after {request_timeout}s", url=url)
-        except httpx.NetworkError as e:
-            raise HTTPError(f"Network error: {str(e)}", url=url)
-        except httpx.HTTPStatusError as e:
-            raise HTTPError(
-                f"HTTP error: {e.response.status_code}",
-                status_code=e.response.status_code,
-                url=url,
-            )
+
+        raise HTTPError("Request failed after retries", url=url)
 
     async def _send_request(
         self,

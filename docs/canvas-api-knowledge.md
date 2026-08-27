@@ -142,6 +142,10 @@ Source: [Throttling](https://developerdocs.instructure.com/services/canvas/basic
 - Exceeding it returns **`429 Forbidden (Rate Limit Exceeded)`** — retry later.
 - Response headers: `X-Request-Cost` (cost of this request) and
   `X-Rate-Limit-Remaining` (remaining quota, when throttling applies).
+- This server retries **429**, **5xx**, and transient **network/timeout** errors
+  with exponential backoff (`CANVAS_RETRY_BASE_DELAY`, default 1s) up to
+  `CANVAS_MAX_RETRIES` (default 3). When Canvas sends **`Retry-After`**, the
+  longer of backoff and that header is used. **400/401/403/404** are never retried.
 - Serial clients (one request at a time) are unlikely to be throttled. Parallel
   requests incur a pre-flight penalty (credited back on completion).
 - Each OAuth access token has its own quota.
