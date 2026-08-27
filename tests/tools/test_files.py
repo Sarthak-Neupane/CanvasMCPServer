@@ -32,8 +32,30 @@ async def test_get_course_files_search_term(canvas_api: CanvasAPIMock) -> None:
 
     await get_course_files("100001", search_term="syllabus")
 
-    assert canvas_api.rest.await_args is not None
-    assert canvas_api.rest.await_args.kwargs["params"]["search_term"] == "syllabus"
+    assert canvas_api.get_rest_paginated_mock.await_args is not None
+    assert (
+        canvas_api.get_rest_paginated_mock.await_args.kwargs["params"]["search_term"]
+        == "syllabus"
+    )
+
+
+async def test_get_course_files_follows_link_pages(canvas_api: CanvasAPIMock) -> None:
+    page_two_item = {
+        **FILE_LIST_REST[0],
+        "id": 500002,
+        "display_name": "notes.pdf",
+        "filename": "notes.pdf",
+    }
+    canvas_api.rest_returns_pages(
+        "v1/courses/100001/files",
+        [FILE_LIST_REST, [page_two_item]],
+    )
+
+    result = await get_course_files("100001")
+
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert {item.id for item in result} == {500001, 500002}
 
 
 async def test_get_course_folders_success(canvas_api: CanvasAPIMock) -> None:

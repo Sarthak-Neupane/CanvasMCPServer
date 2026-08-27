@@ -105,7 +105,7 @@ async def get_all_courses(
             # with REST /v1/courses (+ term) so summaries keep the same shape
             # as the non-active path.
             dashboard_ids = await _dashboard_course_ids()
-            rest_response = await canvas_api_client.get_rest(
+            course_list = await canvas_api_client.get_rest_paginated(
                 "v1/courses",
                 params={
                     "enrollment_state": "active",
@@ -113,9 +113,6 @@ async def get_all_courses(
                     "per_page": 100,
                 },
             )
-            course_list = rest_response.data
-            if not isinstance(course_list, list):
-                raise Exception("Canvas REST courses response was not a list")
             courses = [
                 _rest_course_to_summary(course)
                 for course in course_list

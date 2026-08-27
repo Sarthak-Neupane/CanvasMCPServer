@@ -61,8 +61,8 @@ async def test_get_course_discussions_search_term(canvas_api: CanvasAPIMock) -> 
 
     await get_course_discussions("100001", search_term="Week 1")
 
-    assert canvas_api.rest.await_args is not None
-    params = canvas_api.rest.await_args.kwargs["params"]
+    assert canvas_api.get_rest_paginated_mock.await_args is not None
+    params = canvas_api.get_rest_paginated_mock.await_args.kwargs["params"]
     assert params["search_term"] == "Week 1"
     assert params["only_announcements"] is False
 

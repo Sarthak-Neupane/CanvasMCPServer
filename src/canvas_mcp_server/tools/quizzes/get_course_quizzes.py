@@ -43,16 +43,14 @@ async def get_course_quizzes(
         if search_term:
             params["search_term"] = search_term
 
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/quizzes",
             params=params,
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas quizzes response was not a list")
 
         return [
             QuizSummary.model_validate(sanitize_quiz_api_payload(quiz))
-            for quiz in response.data
+            for quiz in data
             if isinstance(quiz, dict)
         ]
 

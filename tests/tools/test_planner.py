@@ -40,7 +40,7 @@ async def test_get_planner_items_date_and_course_filters(
         course_id="100001",
     )
 
-    params = canvas_api.rest.await_args.kwargs["params"]
+    params = canvas_api.get_rest_paginated_mock.await_args.kwargs["params"]
     assert params["start_date"] == "2026-08-27"
     assert params["end_date"] == "2026-09-03"
     assert params["context_codes[]"] == "course_100001"

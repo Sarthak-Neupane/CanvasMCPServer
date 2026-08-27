@@ -39,8 +39,11 @@ async def test_get_course_quizzes_search_term(canvas_api: CanvasAPIMock) -> None
 
     await get_course_quizzes("100001", search_term="Quiz 1")
 
-    assert canvas_api.rest.await_args is not None
-    assert canvas_api.rest.await_args.kwargs["params"]["search_term"] == "Quiz 1"
+    assert canvas_api.get_rest_paginated_mock.await_args is not None
+    assert (
+        canvas_api.get_rest_paginated_mock.await_args.kwargs["params"]["search_term"]
+        == "Quiz 1"
+    )
 
 
 async def test_get_quiz_success(canvas_api: CanvasAPIMock) -> None:

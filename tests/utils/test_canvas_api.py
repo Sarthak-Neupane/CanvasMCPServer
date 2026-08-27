@@ -14,6 +14,7 @@ from tests.fixtures.files import FILE_BYTES
 def canvas_download_config(monkeypatch) -> None:
     monkeypatch.setattr(Config, "CANVAS_API_TOKEN", "test-token")
     monkeypatch.setattr(Config, "CANVAS_BASE_URL", "https://canvas.example.edu/api")
+    canvas_api_client.base_url = "https://canvas.example.edu/api"
 
 
 @respx.mock
@@ -76,3 +77,40 @@ async def test_download_file_to_path_rejects_content_length_over_limit(
         )
 
     assert not destination.exists()
+
+
+@respx.mock
+async def test_get_rest_paginated_follows_link_header(
+    canvas_download_config,
+) -> None:
+    page_one_url = (
+        "https://canvas.example.edu/api/v1/courses/1/files?per_page=1"
+    )
+    page_two_url = (
+        "https://canvas.example.edu/api/v1/courses/1/files?per_page=1&page=2"
+    )
+    link_header = f'<{page_two_url}>; rel="next"'
+
+    respx.get(page_one_url).mock(
+        return_value=httpx.Response(
+            200,
+            json=[{"id": 1, "display_name": "a.pdf"}],
+            headers={"Link": link_header},
+        )
+    )
+    respx.get(page_two_url).mock(
+        return_value=httpx.Response(
+            200,
+            json=[{"id": 2, "display_name": "b.pdf"}],
+        )
+    )
+
+    items = await canvas_api_client.get_rest_paginated(
+        "v1/courses/1/files",
+        params={"per_page": 1},
+        max_pages=2,
+    )
+
+    assert len(items) == 2
+    assert items[0]["id"] == 1
+    assert items[1]["id"] == 2

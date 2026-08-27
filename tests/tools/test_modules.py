@@ -27,7 +27,7 @@ async def test_get_course_modules_structure_only(canvas_api: CanvasAPIMock) -> N
     assert result[1].state == "locked"
     assert not hasattr(result[0], "items")
 
-    call = canvas_api.rest.await_args
+    call = canvas_api.get_rest_paginated_mock.await_args
     assert call is not None
     params = call.kwargs["params"]
     assert "include[]" not in params

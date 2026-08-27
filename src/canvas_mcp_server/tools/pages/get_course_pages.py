@@ -42,13 +42,11 @@ async def get_course_pages(
         if search_term:
             params["search_term"] = search_term
 
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/pages",
             params=params,
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas pages response was not a list")
-        return [PageSummary.model_validate(page) for page in response.data]
+        return [PageSummary.model_validate(page) for page in data]
 
     except HTTPError as e:
         return {

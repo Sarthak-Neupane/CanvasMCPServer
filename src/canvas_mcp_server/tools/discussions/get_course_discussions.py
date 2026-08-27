@@ -45,13 +45,11 @@ async def get_course_discussions(
         if search_term:
             params["search_term"] = search_term
 
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/discussion_topics",
             params=params,
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas discussion topics response was not a list")
-        return [DiscussionSummary.model_validate(topic) for topic in response.data]
+        return [DiscussionSummary.model_validate(topic) for topic in data]
 
     except HTTPError as e:
         return {

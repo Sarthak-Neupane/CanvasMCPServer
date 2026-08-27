@@ -25,11 +25,13 @@ def canvas_api(monkeypatch) -> CanvasAPIMock:
     monkeypatch.setattr(Config, "CANVAS_API_TOKEN", "test-token")
     original_graphql = canvas_api_client.post_graphql_query
     original_rest = canvas_api_client.get_rest
+    original_get_rest_paginated = canvas_api_client.get_rest_paginated
     original_download_to_path = canvas_api_client.download_file_to_path
     mock = CanvasAPIMock().apply()
     yield mock
     canvas_api_client.post_graphql_query = original_graphql
     canvas_api_client.get_rest = original_rest
+    canvas_api_client.get_rest_paginated = original_get_rest_paginated
     canvas_api_client.download_file_to_path = original_download_to_path
 
 

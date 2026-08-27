@@ -51,9 +51,11 @@ class CanvasAPIMock:
 
     graphql: AsyncMock = field(default_factory=AsyncMock)
     rest: AsyncMock = field(default_factory=AsyncMock)
+    get_rest_paginated_mock: AsyncMock = field(default_factory=AsyncMock)
     download_to_path: AsyncMock = field(default_factory=AsyncMock)
     _rest_routes: Dict[str, RestRoute] = field(default_factory=dict)
     _graphql_queue: List[HTTPResponse] = field(default_factory=list)
+    _paginated_pages: Dict[str, List[HTTPResponse]] = field(default_factory=dict)
 
     def _match_rest_route(self, endpoint: str) -> Optional[RestRoute]:
         if endpoint in self._rest_routes:
@@ -123,6 +125,45 @@ class CanvasAPIMock:
         self.rest.side_effect = _rest_handler
         self.graphql.side_effect = _graphql_handler
         self.download_to_path.side_effect = _download_to_path_handler
+        self.get_rest_paginated_mock.side_effect = self._get_rest_paginated_handler
+
+    async def _get_rest_paginated_handler(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        *,
+        max_pages: Optional[int] = None,
+        max_items: Optional[int] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> List[Any]:
+        page_limit = max_pages or 10
+        items: List[Any] = []
+
+        if endpoint in self._paginated_pages:
+            for response in self._paginated_pages[endpoint][:page_limit]:
+                if isinstance(response.data, list):
+                    items.extend(response.data)
+                if max_items is not None and len(items) >= max_items:
+                    return items[:max_items]
+            return items
+
+        response = await self.rest(
+            endpoint,
+            params=params,
+            headers=headers,
+            timeout=timeout,
+        )
+        if not isinstance(response.data, list):
+            raise HTTPError(
+                f"REST mock for {endpoint} did not return a list",
+                status_code=500,
+                url=endpoint,
+            )
+        items = list(response.data)
+        if max_items is not None:
+            return items[:max_items]
+        return items
 
     def rest_returns(
         self,
@@ -186,6 +227,33 @@ class CanvasAPIMock:
         self._rest_routes[endpoint] = _raise
         return self
 
+    def rest_returns_pages(
+        self,
+        endpoint: str,
+        pages: List[List[Any]],
+        *,
+        base_url: str = "https://canvas.example.edu/api",
+    ) -> "CanvasAPIMock":
+        """Register multi-page REST list responses for pagination tests."""
+        built: List[HTTPResponse] = []
+        for index, page_data in enumerate(pages):
+            headers: Dict[str, str] = {}
+            if index < len(pages) - 1:
+                next_url = (
+                    f"{base_url}/{endpoint.lstrip('/')}"
+                    f"?page={index + 2}&per_page=100"
+                )
+                headers["Link"] = f'<{next_url}>; rel="next"'
+            built.append(
+                make_http_response(
+                    page_data,
+                    headers=headers,
+                    url=f"{base_url}/{endpoint}",
+                )
+            )
+        self._paginated_pages[endpoint] = built
+        return self
+
     def graphql_raises(
         self,
         *,
@@ -215,5 +283,6 @@ class CanvasAPIMock:
         self.configure()
         canvas_api_client.post_graphql_query = self.graphql
         canvas_api_client.get_rest = self.rest
+        canvas_api_client.get_rest_paginated = self.get_rest_paginated_mock
         canvas_api_client.download_file_to_path = self.download_to_path
         return self

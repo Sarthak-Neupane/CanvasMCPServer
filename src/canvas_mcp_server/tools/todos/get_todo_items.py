@@ -25,12 +25,10 @@ async def get_todo_items() -> TodoItemsResponse:
     "error", "message", and optionally "status_code" keys on failure.
     """
     try:
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT, params={"per_page": 100}
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas todo response was not a list")
-        return [TodoItem.model_validate(item) for item in response.data]
+        return [TodoItem.model_validate(item) for item in data]
 
     except HTTPError as e:
         return {

@@ -63,14 +63,12 @@ async def get_planner_items(
         if course_id:
             params["context_codes[]"] = f"course_{course_id}"
 
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT,
             params=params,
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas planner items response was not a list")
 
-        return [planner_item_from_api(item) for item in response.data if isinstance(item, dict)]
+        return [planner_item_from_api(item) for item in data if isinstance(item, dict)]
 
     except HTTPError as e:
         return {

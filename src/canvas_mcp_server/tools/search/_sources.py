@@ -82,15 +82,14 @@ async def _collect_syllabus(course_id: str) -> List[SearchDocument]:
 
 
 async def _collect_pages(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.get_rest(
+    data = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/pages",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
+        max_items=PER_SOURCE_LIMIT,
     )
-    if not isinstance(response.data, list):
-        return []
 
     documents: List[SearchDocument] = []
-    for page in response.data:
+    for page in data:
         if not isinstance(page, dict):
             continue
         slug = page.get("url")
@@ -146,15 +145,14 @@ async def _collect_assignments(course_id: str, query: str) -> List[SearchDocumen
 
 
 async def _collect_modules(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.get_rest(
+    data = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/modules",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
+        max_items=PER_SOURCE_LIMIT,
     )
-    if not isinstance(response.data, list):
-        return []
 
     documents: List[SearchDocument] = []
-    for module in response.data:
+    for module in data:
         if not isinstance(module, dict):
             continue
         module_id = module.get("id")
@@ -214,15 +212,14 @@ async def _collect_announcements(course_id: str, query: str) -> List[SearchDocum
 
 
 async def _collect_files(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.get_rest(
+    data = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/files",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
+        max_items=PER_SOURCE_LIMIT,
     )
-    if not isinstance(response.data, list):
-        return []
 
     documents: List[SearchDocument] = []
-    for file_obj in response.data:
+    for file_obj in data:
         if not isinstance(file_obj, dict):
             continue
         file_id = file_obj.get("id")
@@ -246,15 +243,14 @@ async def _collect_files(course_id: str, query: str) -> List[SearchDocument]:
 
 
 async def _collect_quizzes(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.get_rest(
+    data = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/quizzes",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
+        max_items=PER_SOURCE_LIMIT,
     )
-    if not isinstance(response.data, list):
-        return []
 
     documents: List[SearchDocument] = []
-    for quiz in response.data:
+    for quiz in data:
         if not isinstance(quiz, dict):
             continue
         quiz_id = quiz.get("id")
@@ -276,19 +272,18 @@ async def _collect_quizzes(course_id: str, query: str) -> List[SearchDocument]:
 
 
 async def _collect_discussions(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.get_rest(
+    data = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/discussion_topics",
         params={
             "per_page": PER_SOURCE_LIMIT,
             "search_term": query,
             "only_announcements": False,
         },
+        max_items=PER_SOURCE_LIMIT,
     )
-    if not isinstance(response.data, list):
-        return []
 
     documents: List[SearchDocument] = []
-    for topic in response.data:
+    for topic in data:
         if not isinstance(topic, dict):
             continue
         discussion_id = topic.get("id")

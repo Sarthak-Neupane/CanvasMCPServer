@@ -67,8 +67,8 @@ async def test_get_calendar_events_course_filter(
         course_id="100001",
     )
 
-    assert canvas_api.rest.await_count == 2
-    for call in canvas_api.rest.await_args_list:
+    assert canvas_api.get_rest_paginated_mock.await_count == 2
+    for call in canvas_api.get_rest_paginated_mock.await_args_list:
         params = call.kwargs["params"]
         assert params["context_codes[]"] == ["course_100001"]
         assert params["type"] in ("event", "assignment")

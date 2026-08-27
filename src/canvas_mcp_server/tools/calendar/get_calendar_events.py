@@ -56,16 +56,14 @@ async def _fetch_calendar_events(
     if context_codes:
         params["context_codes[]"] = context_codes
 
-    response = await canvas_api_client.get_rest(
+    data = await canvas_api_client.get_rest_paginated(
         endpoint=REST_ENDPOINT,
         params=params,
     )
-    if not isinstance(response.data, list):
-        raise Exception("Canvas calendar events response was not a list")
 
     return [
         calendar_event_from_api(item, event_type=event_type)
-        for item in response.data
+        for item in data
         if isinstance(item, dict)
     ]
 

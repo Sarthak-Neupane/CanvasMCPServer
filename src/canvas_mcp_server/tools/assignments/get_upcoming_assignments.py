@@ -26,14 +26,12 @@ async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
     keys on failure.
     """
     try:
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT, params={"per_page": 100}
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas upcoming events response was not a list")
 
         assignments: List[UpcomingAssignment] = []
-        for event in response.data:
+        for event in data:
             assignment = event.get("assignment")
             if not assignment:
                 continue

@@ -56,13 +56,11 @@ async def get_module_items(
         if search_term:
             params["search_term"] = search_term
 
-        response = await canvas_api_client.get_rest(
+        data = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/modules/{module_id}/items",
             params=params,
         )
-        if not isinstance(response.data, list):
-            raise Exception("Canvas module items response was not a list")
-        return [ModuleItemSummary.model_validate(item) for item in response.data]
+        return [ModuleItemSummary.model_validate(item) for item in data]
 
     except HTTPError as e:
         return {

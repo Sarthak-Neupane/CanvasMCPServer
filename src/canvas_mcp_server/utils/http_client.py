@@ -188,6 +188,63 @@ class BaseHTTPClient:
     ) -> HTTPResponse:
         """Make a GET request."""
         return await self._make_request("GET", endpoint, params=params, headers=headers, timeout=timeout)
+
+    async def get_absolute(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> HTTPResponse:
+        """
+        Make a GET request to a fully qualified URL.
+
+        Used to follow opaque Canvas pagination links from the Link header.
+        """
+        merged_headers = self._merge_headers(headers)
+        request_timeout = timeout or self.timeout
+
+        try:
+            async with httpx.AsyncClient(timeout=request_timeout) as client:
+                response = await client.get(url, headers=merged_headers)
+
+                try:
+                    response_data = response.json()
+                except (ValueError, httpx.InvalidURL):
+                    response_data = response.text
+
+                http_response = HTTPResponse(
+                    status_code=response.status_code,
+                    data=response_data,
+                    headers=dict(response.headers),
+                    url=str(response.url),
+                )
+
+                if not http_response.is_success:
+                    error_msg = f"HTTP {response.status_code} error"
+                    if isinstance(response_data, dict) and "message" in response_data:
+                        error_msg += f": {response_data['message']}"
+                    elif isinstance(response_data, str):
+                        error_msg += f": {response_data[:200]}..."
+
+                    raise HTTPError(
+                        message=error_msg,
+                        status_code=response.status_code,
+                        response_data=response_data,
+                        url=url,
+                    )
+
+                return http_response
+
+        except httpx.TimeoutException:
+            raise HTTPError(f"Request timeout after {request_timeout}s", url=url)
+        except httpx.NetworkError as e:
+            raise HTTPError(f"Network error: {str(e)}", url=url)
+        except httpx.HTTPStatusError as e:
+            raise HTTPError(
+                f"HTTP error: {e.response.status_code}",
+                status_code=e.response.status_code,
+                url=url,
+            )
     
     async def post(
         self,

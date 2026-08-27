@@ -3,10 +3,11 @@
 import httpx
 
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 
 from ..config import config
 from .http_client import BaseHTTPClient, HTTPResponse, HTTPError
+from .rest_pagination import DEFAULT_MAX_PAGES, DEFAULT_PER_PAGE, parse_link_header
 
 
 class CanvasAPIClient(BaseHTTPClient):
@@ -100,6 +101,111 @@ class CanvasAPIClient(BaseHTTPClient):
             )
         except HTTPError as e:
             raise self._contextualize_error(e) from e
+
+    async def get_rest_absolute(
+        self,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> HTTPResponse:
+        """
+        GET a fully qualified Canvas REST URL (Link header pagination).
+
+        Args:
+            url: Absolute URL from a Canvas Link response header.
+            headers: Additional headers to merge into the request.
+            timeout: Request timeout override in seconds.
+
+        Returns:
+            HTTPResponse: The raw response; the JSON payload is in `.data`.
+        """
+        config.validate()
+        try:
+            return await self.get_absolute(url, headers=headers, timeout=timeout)
+        except HTTPError as e:
+            raise self._contextualize_error(e) from e
+
+    async def get_rest_paginated(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        *,
+        max_pages: Optional[int] = None,
+        max_items: Optional[int] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> List[Any]:
+        """
+        Fetch all pages of a Canvas REST list endpoint.
+
+        Follows Link header rel="next" URLs until exhausted or limits are hit.
+        The first request uses ``endpoint`` relative to CANVAS_BASE_URL; later
+        pages use the opaque URLs Canvas returns.
+
+        Args:
+            endpoint: REST path, e.g. ``v1/courses/:id/files``.
+            params: Query parameters for the first request only.
+            max_pages: Maximum number of pages to fetch (default 10).
+            max_items: Optional cap on total items returned.
+            headers: Additional headers for each request.
+            timeout: Request timeout override in seconds.
+
+        Returns:
+            List[Any]: Aggregated JSON array items across pages.
+
+        Raises:
+            HTTPError: If any page request fails.
+            ValueError: If a page response is not a JSON array.
+        """
+        config.validate()
+        page_limit = max_pages if max_pages is not None else DEFAULT_MAX_PAGES
+        query = dict(params or {})
+        query.setdefault("per_page", DEFAULT_PER_PAGE)
+
+        items: List[Any] = []
+        next_url: Optional[str] = None
+
+        for page_index in range(page_limit):
+            if next_url:
+                response = await self.get_rest_absolute(
+                    next_url,
+                    headers=headers,
+                    timeout=timeout,
+                )
+            else:
+                response = await self.get_rest(
+                    endpoint=endpoint,
+                    params=query,
+                    headers=headers,
+                    timeout=timeout,
+                )
+
+            if not isinstance(response.data, list):
+                raise ValueError(
+                    f"Canvas REST list response was not an array: {endpoint}",
+                )
+
+            items.extend(response.data)
+            if max_items is not None and len(items) >= max_items:
+                return items[:max_items]
+
+            link_header = next(
+                (
+                    value
+                    for key, value in response.headers.items()
+                    if key.lower() == "link"
+                ),
+                "",
+            )
+            links = parse_link_header(link_header)
+            next_url = links.get("next")
+            if not next_url:
+                break
+
+            if page_index + 1 >= page_limit:
+                break
+
+        return items
 
     async def download_file_to_path(
         self,
