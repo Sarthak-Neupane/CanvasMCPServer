@@ -4,26 +4,33 @@ from __future__ import annotations
 
 import pytest
 
+from canvas_mcp_server.config import Config
 from canvas_mcp_server.utils.canvas_api import canvas_api_client
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
 @pytest.fixture
-def canvas_api() -> CanvasAPIMock:
+def canvas_api(monkeypatch) -> CanvasAPIMock:
     """
     Patch the global Canvas API client for one test.
 
     Register responses with canvas_api.rest_returns(...) or
     canvas_api.graphql_returns(...) before calling tool functions.
     """
+    monkeypatch.setattr(
+        Config,
+        "CANVAS_BASE_URL",
+        "https://canvas.example.edu/api",
+    )
+    monkeypatch.setattr(Config, "CANVAS_API_TOKEN", "test-token")
     original_graphql = canvas_api_client.post_graphql_query
     original_rest = canvas_api_client.get_rest
-    original_download = canvas_api_client.download_file_bytes
+    original_download_to_path = canvas_api_client.download_file_to_path
     mock = CanvasAPIMock().apply()
     yield mock
     canvas_api_client.post_graphql_query = original_graphql
     canvas_api_client.get_rest = original_rest
-    canvas_api_client.download_file_bytes = original_download
+    canvas_api_client.download_file_to_path = original_download_to_path
 
 
 @pytest.fixture

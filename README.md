@@ -26,10 +26,10 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_course_folders` | List all folders in a course (flat list with full paths and file counts). |
 | `get_folder_files` | List files in a folder by `folder_id`. Optional `search_term` and `content_type`. |
 | `get_file_details` | Get metadata for one file by `file_id` (includes download URL; does not download). |
-| `download_file` | Download one file to `CANVAS_DOWNLOAD_DIR` (default `~/Downloads/Canvas/{course}/{folder?}/`). |
-| `download_course_files` | Download course files matching optional `search_term` / `content_type` filters. |
-| `download_module_files` | Download all File-type items from a module. |
-| `download_assignment_files` | Download files embedded in an assignment description. Optional relative `folder`. |
+| `download_file` | Download one Canvas **file** to `CANVAS_DOWNLOAD_DIR` (default `~/Downloads/Canvas/{course}/{folder?}/`). |
+| `download_course_files` | Download course **files** matching optional `search_term` / `content_type` filters. |
+| `download_module_files` | Download **File-type module items only** (Canvas-hosted files). Skips Pages, Assignments, Quizzes, and external links — use `get_page` / `get_assignment_details` for those. |
+| `download_assignment_files` | Download **files embedded** in an assignment description (via `get_assignment_resources` discovery). Optional relative `folder`. |
 | `get_upcoming_assignments` | List upcoming assignments across all courses with due dates and points. |
 | `get_assignments_for_course` | List all assignments in a course (name, due date, points, state, URL). |
 | `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
@@ -109,6 +109,13 @@ pip install -e .
    - **Downloads**: files are saved under `CANVAS_DOWNLOAD_DIR` (default
      `~/Downloads/Canvas`), organized as `{course_name}/{optional_folder}/{filename}`.
      Tools accept only a relative `folder` name — never an absolute path.
+     Download tools save **Canvas Files** only (binary uploads). They do not
+     export wiki Pages, assignment HTML, or other module item types — use
+     `get_page`, `get_assignment_details`, or `get_assignment_resources` to read
+     that content in the chat instead. Downloads stream to disk (not fully
+     buffered in memory), enforce `CANVAS_MAX_DOWNLOAD_SIZE_MB`, validate that
+     file URLs match your `CANVAS_BASE_URL` host, and suffix duplicate filenames
+     (e.g. `notes (1).pdf`).
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -117,6 +124,7 @@ pip install -e .
 | `CANVAS_TIMEOUT` | no | `30` | Request timeout in seconds |
 | `CANVAS_DOWNLOAD_DIR` | no | `~/Downloads/Canvas` | Root directory for downloaded files |
 | `CANVAS_DOWNLOAD_TIMEOUT` | no | same as `CANVAS_TIMEOUT` | Timeout for binary file downloads |
+| `CANVAS_MAX_DOWNLOAD_SIZE_MB` | no | `100` | Maximum size (MB) for a single file download |
 | `DEBUG` | no | `false` | Enable debug mode |
 | `LOG_LEVEL` | no | `INFO` | Log level |
 

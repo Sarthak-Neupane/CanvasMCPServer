@@ -2,6 +2,7 @@
 
 import httpx
 
+from pathlib import Path
 from typing import Dict, Any, Optional
 
 from ..config import config
@@ -100,6 +101,95 @@ class CanvasAPIClient(BaseHTTPClient):
         except HTTPError as e:
             raise self._contextualize_error(e) from e
 
+    async def download_file_to_path(
+        self,
+        url: str,
+        destination: Path,
+        *,
+        max_bytes: Optional[int] = None,
+        timeout: Optional[float] = None,
+    ) -> int:
+        """
+        Stream a Canvas file download to disk with a size cap.
+
+        Args:
+            url: Authenticated download URL from the Files API.
+            destination: Local path to write (parent dirs are not created here).
+            max_bytes: Maximum bytes to accept; defaults to config limit.
+            timeout: Request timeout override in seconds.
+
+        Returns:
+            int: Number of bytes written.
+
+        Raises:
+            HTTPError: If the request fails, the file is too large, or Canvas
+                returns an error status.
+            ValueError: If required configuration is missing.
+        """
+        config.validate()
+        request_timeout = timeout or config.get_download_timeout()
+        byte_limit = max_bytes if max_bytes is not None else config.get_max_download_bytes()
+        headers = config.get_download_headers()
+        try:
+            async with httpx.AsyncClient(
+                timeout=request_timeout, follow_redirects=True
+            ) as client:
+                async with client.stream("GET", url, headers=headers) as response:
+                    if not (200 <= response.status_code < 300):
+                        body_preview = ""
+                        async for chunk in response.aiter_bytes():
+                            body_preview += chunk.decode("utf-8", errors="replace")
+                            if len(body_preview) >= 500:
+                                break
+                        raise HTTPError(
+                            f"HTTP {response.status_code} error",
+                            status_code=response.status_code,
+                            response_data=body_preview,
+                            url=url,
+                        )
+
+                    content_length = response.headers.get("content-length")
+                    if content_length is not None:
+                        try:
+                            declared_size = int(content_length)
+                        except ValueError:
+                            declared_size = None
+                        if declared_size is not None and declared_size > byte_limit:
+                            raise HTTPError(
+                                f"File exceeds maximum download size of "
+                                f"{byte_limit} bytes",
+                                status_code=response.status_code,
+                                url=url,
+                            )
+
+                    bytes_written = 0
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    try:
+                        with destination.open("wb") as handle:
+                            async for chunk in response.aiter_bytes():
+                                bytes_written += len(chunk)
+                                if bytes_written > byte_limit:
+                                    raise HTTPError(
+                                        f"File exceeds maximum download size of "
+                                        f"{byte_limit} bytes",
+                                        status_code=response.status_code,
+                                        url=url,
+                                    )
+                                handle.write(chunk)
+                    except Exception:
+                        destination.unlink(missing_ok=True)
+                        raise
+
+                    return bytes_written
+        except httpx.TimeoutException:
+            destination.unlink(missing_ok=True)
+            raise HTTPError(
+                f"Download timeout after {request_timeout}s", url=url
+            ) from None
+        except httpx.NetworkError as e:
+            destination.unlink(missing_ok=True)
+            raise HTTPError(f"Network error: {str(e)}", url=url) from e
+
     async def download_file_bytes(
         self,
         url: str,
@@ -109,6 +199,7 @@ class CanvasAPIClient(BaseHTTPClient):
         Download raw file bytes from a Canvas file URL.
 
         Uses Authorization only (no JSON Content-Type). Follows redirects.
+        Prefer download_file_to_path for production downloads.
 
         Args:
             url: Authenticated download URL from the Files API.

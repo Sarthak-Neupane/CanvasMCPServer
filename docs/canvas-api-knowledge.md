@@ -367,8 +367,11 @@ top-level query for todo items or upcoming events — those are REST-only.
 - **File downloads**: use the `url` from file metadata with Bearer auth (Canvas
   often also includes a `verifier` query param). Local saves go under
   `CANVAS_DOWNLOAD_DIR`; only relative subfolders are allowed from tools.
-  Assignment materials may be embedded in description HTML (`data-api-endpoint`
-  or `/files/:id` links) — parse those ids for `download_assignment_files`.
+  Downloads stream to disk via `download_file_to_path` with a
+  `CANVAS_MAX_DOWNLOAD_SIZE_MB` cap (default 100). The initial download URL
+  must be `https` on the same host as `CANVAS_BASE_URL`; duplicate local
+  filenames get numeric suffixes (`file (1).pdf`). Batch downloads report
+  per-file failures in `failed` without aborting the rest.
 - **HTML utilities** (`src/canvas_mcp_server/utils/html.py`):
   - `html_to_text(html)` — plain text for LLM consumption; strips `script`/`style`.
   - `extract_canvas_links(html)` — `{href, text}` for every `<a>` tag.
@@ -383,6 +386,13 @@ top-level query for todo items or upcoming events — those are REST-only.
   `data-api-endpoint` instructure embeds). Returns deduped metadata for files,
   pages, external URLs, and other course objects — use before
   `download_assignment_files` when you need discovery separate from download.
+- **Module downloads**: `download_module_files(course_id, module_id)` calls
+  `get_module_items` and downloads only items where `type == "File"` (uses each
+  item's `content_id` as the Canvas file id). **Does not** download Page,
+  Assignment, Quiz, Discussion, ExternalUrl, or SubHeader items. Wiki page
+  content is available via `get_page`; assignment bodies via `get_assignment_details`.
+  Post-v1 candidates: `export_page` (save page HTML/text to disk),
+  `download_module_content` (batch all module item types).
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)

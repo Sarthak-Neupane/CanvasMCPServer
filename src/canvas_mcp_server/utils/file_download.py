@@ -3,6 +3,7 @@
 import re
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 from ..config import config
 from ..models import DownloadBatchResult, DownloadFailure, DownloadedFile, FileDetail
@@ -40,6 +41,53 @@ def validate_relative_folder(folder: Optional[str]) -> Optional[str]:
     if ".." in parts:
         raise ValueError("folder must not contain '..'")
     return folder
+
+
+def validate_canvas_download_url(url: str) -> None:
+    """
+    Ensure a file download URL points at the configured Canvas instance.
+
+    Raises:
+        ValueError: If the URL scheme or host is not allowed.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise ValueError(
+            f"Download URL must use https scheme, got {parsed.scheme!r}",
+        )
+    if not parsed.hostname:
+        raise ValueError("Download URL must include a host")
+
+    base_host = urlparse(config.CANVAS_BASE_URL).hostname
+    if not base_host:
+        raise ValueError("CANVAS_BASE_URL must include a host for download validation")
+    if parsed.hostname != base_host:
+        raise ValueError(
+            f"Download URL host {parsed.hostname!r} does not match "
+            f"CANVAS_BASE_URL host {base_host!r}",
+        )
+
+
+def resolve_unique_download_path(directory: Path, filename: str) -> Path:
+    """
+    Return a destination path that does not collide with existing files.
+
+    Uses ``name (1).ext``, ``name (2).ext``, ... when ``filename`` exists.
+    """
+    candidate = directory / filename
+    if not candidate.exists():
+        return candidate
+
+    path = Path(filename)
+    stem = path.stem
+    suffix = path.suffix
+    for counter in range(1, 1000):
+        alt_name = sanitize_path_component(f"{stem} ({counter}){suffix}")
+        candidate = directory / alt_name
+        if not candidate.exists():
+            return candidate
+
+    raise ValueError(f"Could not find a unique filename for {filename!r}")
 
 
 def _assert_within_root(path: Path, root: Path) -> None:
@@ -122,29 +170,35 @@ async def download_one_file(
                 message="File metadata did not include a download URL",
             )
 
-        display_name = detail.display_name or detail.filename or f"file_{file_id}"
-        filename = sanitize_path_component(display_name)
-        local_path = course_dir / filename
-        _assert_within_root(local_path, config.get_download_dir())
-
-        if local_path.exists():
-            return DownloadedFile(
+        max_bytes = config.get_max_download_bytes()
+        if detail.size is not None and detail.size > max_bytes:
+            return DownloadFailure(
                 file_id=file_id,
-                display_name=display_name,
-                local_path=str(local_path),
-                bytes_written=0,
-                skipped=True,
+                message=(
+                    f"File size {detail.size} bytes exceeds the "
+                    f"{config.CANVAS_MAX_DOWNLOAD_SIZE_MB} MB download limit"
+                ),
             )
 
+        validate_canvas_download_url(detail.url)
+
+        display_name = detail.display_name or detail.filename or f"file_{file_id}"
+        filename = sanitize_path_component(display_name)
+        local_path = resolve_unique_download_path(course_dir, filename)
+        _assert_within_root(local_path, config.get_download_dir())
+
         course_dir.mkdir(parents=True, exist_ok=True)
-        content = await canvas_api_client.download_file_bytes(detail.url)
-        local_path.write_bytes(content)
+        bytes_written = await canvas_api_client.download_file_to_path(
+            detail.url,
+            local_path,
+            max_bytes=max_bytes,
+        )
 
         return DownloadedFile(
             file_id=file_id,
             display_name=display_name,
             local_path=str(local_path.resolve()),
-            bytes_written=len(content),
+            bytes_written=bytes_written,
             skipped=False,
         )
 
@@ -157,9 +211,14 @@ async def download_many_files(
     course_id: str,
     folder: Optional[str] = None,
 ) -> DownloadBatchResult:
-    """Download multiple files into the same course directory."""
+    """
+    Download multiple files into the same course directory.
+
+    Each file is attempted independently; successes and failures are reported
+    separately so one bad file does not abort the rest of the batch.
+    """
     course_name = await resolve_course_name(course_id)
-    course_dir, download_root = resolve_download_dir(course_name, folder)
+    course_dir, _download_root = resolve_download_dir(course_name, folder)
 
     downloaded: List[DownloadedFile] = []
     failed: List[DownloadFailure] = []

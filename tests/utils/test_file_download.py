@@ -7,7 +7,9 @@ import pytest
 from canvas_mcp_server.utils.file_download import (
     extract_file_ids_from_html,
     resolve_download_dir,
+    resolve_unique_download_path,
     sanitize_path_component,
+    validate_canvas_download_url,
     validate_relative_folder,
 )
 
@@ -62,3 +64,46 @@ def test_extract_file_ids_from_html_empty_input() -> None:
     assert extract_file_ids_from_html(None) == []
     assert extract_file_ids_from_html("") == []
     assert extract_file_ids_from_html("<p>No files here</p>") == []
+
+
+def test_resolve_unique_download_path_adds_numeric_suffix(tmp_path: Path) -> None:
+    directory = tmp_path / "course"
+    directory.mkdir()
+    existing = directory / "notes.pdf"
+    existing.write_bytes(b"original")
+
+    resolved = resolve_unique_download_path(directory, "notes.pdf")
+
+    assert resolved == directory / "notes (1).pdf"
+    assert resolved.exists() is False
+
+
+def test_validate_canvas_download_url_accepts_config_host(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "canvas_mcp_server.config.Config.CANVAS_BASE_URL",
+        "https://canvas.example.edu/api",
+    )
+
+    validate_canvas_download_url(
+        "https://canvas.example.edu/files/500001/download?verifier=abc",
+    )
+
+
+def test_validate_canvas_download_url_rejects_foreign_host(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "canvas_mcp_server.config.Config.CANVAS_BASE_URL",
+        "https://canvas.example.edu/api",
+    )
+
+    with pytest.raises(ValueError, match="does not match"):
+        validate_canvas_download_url("https://evil.example.edu/files/1/download")
+
+
+def test_validate_canvas_download_url_rejects_non_https(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "canvas_mcp_server.config.Config.CANVAS_BASE_URL",
+        "https://canvas.example.edu/api",
+    )
+
+    with pytest.raises(ValueError, match="https"):
+        validate_canvas_download_url("http://canvas.example.edu/files/1/download")

@@ -29,6 +29,9 @@ class Config:
     CANVAS_DOWNLOAD_TIMEOUT: int = int(
         os.getenv("CANVAS_DOWNLOAD_TIMEOUT", os.getenv("CANVAS_TIMEOUT", "30"))
     )
+    CANVAS_MAX_DOWNLOAD_SIZE_MB: int = int(
+        os.getenv("CANVAS_MAX_DOWNLOAD_SIZE_MB", "100")
+    )
     
     # Debug Configuration
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
@@ -95,6 +98,16 @@ class Config:
             float: Timeout value in seconds.
         """
         return float(cls.CANVAS_DOWNLOAD_TIMEOUT)
+
+    @classmethod
+    def get_max_download_bytes(cls) -> int:
+        """
+        Maximum allowed file download size in bytes.
+
+        Returns:
+            int: Size cap from CANVAS_MAX_DOWNLOAD_SIZE_MB.
+        """
+        return cls.CANVAS_MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
 
     @classmethod
     def get_download_headers(cls) -> Dict[str, str]:

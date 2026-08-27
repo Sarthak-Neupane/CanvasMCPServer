@@ -51,7 +51,7 @@ class CanvasAPIMock:
 
     graphql: AsyncMock = field(default_factory=AsyncMock)
     rest: AsyncMock = field(default_factory=AsyncMock)
-    download: AsyncMock = field(default_factory=AsyncMock)
+    download_to_path: AsyncMock = field(default_factory=AsyncMock)
     _rest_routes: Dict[str, RestRoute] = field(default_factory=dict)
     _graphql_queue: List[HTTPResponse] = field(default_factory=list)
 
@@ -65,6 +65,23 @@ class CanvasAPIMock:
 
     def configure(self) -> None:
         """Wire AsyncMocks to route-based handlers."""
+
+        async def _download_to_path_handler(
+            url: str,
+            destination: Any,
+            *,
+            max_bytes: Optional[int] = None,
+            timeout: Optional[float] = None,
+        ) -> int:
+            del url, max_bytes, timeout
+            from pathlib import Path
+
+            from tests.fixtures.files import FILE_BYTES
+
+            path = Path(destination)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(FILE_BYTES)
+            return len(FILE_BYTES)
 
         async def _rest_handler(
             endpoint: str,
@@ -105,6 +122,7 @@ class CanvasAPIMock:
 
         self.rest.side_effect = _rest_handler
         self.graphql.side_effect = _graphql_handler
+        self.download_to_path.side_effect = _download_to_path_handler
 
     def rest_returns(
         self,
@@ -197,5 +215,5 @@ class CanvasAPIMock:
         self.configure()
         canvas_api_client.post_graphql_query = self.graphql
         canvas_api_client.get_rest = self.rest
-        canvas_api_client.download_file_bytes = self.download
+        canvas_api_client.download_file_to_path = self.download_to_path
         return self
