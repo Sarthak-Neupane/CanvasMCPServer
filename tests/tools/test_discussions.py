@@ -1,11 +1,11 @@
 """Regression tests for discussion MCP tools."""
 
+from canvas_mcp_server.errors import ErrorCode, tool_error_from_http
 from canvas_mcp_server.models import (
     DiscussionDetail,
     DiscussionEntries,
     DiscussionSummary,
 )
-from canvas_mcp_server.tools.discussions._errors import discussion_http_error
 from canvas_mcp_server.tools.discussions.get_course_discussions import (
     get_course_discussions,
 )
@@ -18,7 +18,7 @@ from tests.fixtures.discussions import (
     DISCUSSION_VIEW_REST,
     DISCUSSIONS_LIST_REST,
 )
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 from canvas_mcp_server.utils.http_client import HTTPError
 
@@ -29,11 +29,14 @@ def test_discussion_http_error_require_initial_post() -> None:
         status_code=403,
         response_data="require_initial_post",
     )
-    result = discussion_http_error(error)
-    assert result is not None
-    assert result["error"] == "Discussion Locked"
+    result = tool_error_from_http(error, source="canvas_rest").to_response()
+    assert_tool_error(
+        result,
+        ErrorCode.DISCUSSION_LOCKED,
+        status_code=403,
+        title="Discussion Locked",
+    )
     assert result["lock_reason"] == "require_initial_post"
-    assert result["status_code"] == 403
 
 
 async def test_get_course_discussions_success(canvas_api: CanvasAPIMock) -> None:
@@ -115,9 +118,13 @@ async def test_get_discussion_entries_require_initial_post(
 
     result = await get_discussion_entries("100001", "400001")
 
-    assert result["error"] == "Discussion Locked"
+    assert_tool_error(
+        result,
+        ErrorCode.DISCUSSION_LOCKED,
+        status_code=403,
+        title="Discussion Locked",
+    )
     assert result["lock_reason"] == "require_initial_post"
-    assert result["status_code"] == 403
 
 
 async def test_get_discussion_http_error(canvas_api: CanvasAPIMock) -> None:

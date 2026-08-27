@@ -130,6 +130,28 @@ pip install -e .
 | `DEBUG` | no | `false` | Enable debug mode |
 | `LOG_LEVEL` | no | `INFO` | Log level |
 
+## Tool errors
+
+On failure, every tool returns a **structured error object** instead of raising.
+Agents should branch on `code` and `retryable`; `error` is a legacy alias of
+`title`.
+
+| Field | Meaning |
+| --- | --- |
+| `code` | Stable identifier (e.g. `resource_not_found`, `canvas_rate_limited`) |
+| `message` | Detailed explanation |
+| `title` / `error` | Short category label |
+| `retryable` | Whether to retry the same tool call later |
+| `status_code` | Canvas HTTP status when applicable |
+| `source` | `local`, `canvas_rest`, `canvas_graphql`, or `download` |
+
+Common codes: `canvas_unauthorized` (401), `canvas_forbidden` (403),
+`resource_not_found` (404), `canvas_rate_limited` (429, retryable),
+`canvas_unavailable` (5xx, retryable), `invalid_argument` (bad tool input),
+`discussion_locked` (`require_initial_post`), `download_failed`.
+
+Full catalog and agent guidance: [docs/errors.md](docs/errors.md).
+
 ## Usage
 
 ### Standalone

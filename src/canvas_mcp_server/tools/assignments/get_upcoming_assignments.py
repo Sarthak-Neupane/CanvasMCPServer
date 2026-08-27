@@ -10,7 +10,8 @@ from typing import Final, List, Dict, Any, Union, TypeAlias
 from mcp.server.fastmcp.tools import Tool
 
 from ...models import UpcomingAssignment
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 UpcomingAssignmentsResponse: TypeAlias = Union[List[UpcomingAssignment], Dict[str, Any]]
 
@@ -42,17 +43,8 @@ async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
             )
         return assignments
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_upcoming_assignments_tool: Final[Tool] = Tool.from_function(

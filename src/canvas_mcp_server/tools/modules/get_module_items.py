@@ -10,7 +10,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import ModuleItemSummary
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 ModuleItemsResponse: TypeAlias = Union[List[ModuleItemSummary], Dict[str, Any]]
 
@@ -62,17 +63,8 @@ async def get_module_items(
         )
         return [ModuleItemSummary.model_validate(item) for item in data]
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_module_items_tool: Final[Tool] = Tool.from_function(

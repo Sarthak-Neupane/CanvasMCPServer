@@ -5,8 +5,8 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
+from ...errors import as_tool_error
 from ...models import SearchResult
-from ...utils import HTTPError
 from ._rank import rank_documents
 from ._snippet import make_snippet
 from ._sources import collect_search_documents
@@ -52,8 +52,7 @@ async def search_course_content(
     syllabus/announcement/discussion body text without per-page body fetches,
     and returns bounded snippets only.
 
-    Returns an error object with "error", "message", and optionally
-    "status_code" keys on failure.
+    On failure returns a structured error object (see docs/errors.md).
     """
     try:
         documents = await collect_search_documents(course_id, query, content_types)
@@ -75,22 +74,8 @@ async def search_course_content(
             )
         return results
 
-    except ValueError as e:
-        return {
-            "error": "Invalid Request",
-            "message": str(e),
-        }
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 search_course_content_tool: Final[Tool] = Tool.from_function(

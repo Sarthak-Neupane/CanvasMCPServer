@@ -6,7 +6,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import AssignmentDetail
-from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client, extract_graphql_data
 
 AssignmentDetailResponse: TypeAlias = Union[AssignmentDetail, Dict[str, Any]]
 
@@ -62,17 +63,8 @@ async def get_assignment_details(
             raise Exception(f"No assignment found for id: {assignment_id}")
         return AssignmentDetail.model_validate(assignment)
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_graphql")
 
 
 get_assignment_details_tool: Final[Tool] = Tool.from_function(

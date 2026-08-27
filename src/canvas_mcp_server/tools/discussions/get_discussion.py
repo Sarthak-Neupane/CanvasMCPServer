@@ -8,10 +8,10 @@ from typing import Final, Dict, Any, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
+from ...errors import as_discussion_tool_error
 from ...models import DiscussionDetail
-from ...utils import canvas_api_client, HTTPError
+from ...utils import canvas_api_client
 from ...utils.html import html_to_text
-from ._errors import discussion_http_error
 
 DiscussionResponse: TypeAlias = Union[DiscussionDetail, Dict[str, Any]]
 
@@ -32,8 +32,7 @@ async def get_discussion(
     Surfaces lock state (locked_for_user, lock_explanation) and whether the
     user must post before viewing replies (require_initial_post).
 
-    Returns an error object with "error", "message", and optionally
-    "status_code" keys on failure.
+    On failure returns a structured error object (see docs/errors.md).
     """
     try:
         response = await canvas_api_client.get_rest(
@@ -51,20 +50,8 @@ async def get_discussion(
             )
         return detail
 
-    except HTTPError as e:
-        mapped = discussion_http_error(e)
-        if mapped:
-            return mapped
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_discussion_tool_error(e, source="canvas_rest")
 
 
 get_discussion_tool: Final[Tool] = Tool.from_function(

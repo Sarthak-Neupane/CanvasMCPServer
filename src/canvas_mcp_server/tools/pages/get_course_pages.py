@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import PageSummary
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 PagesResponse: TypeAlias = Union[List[PageSummary], Dict[str, Any]]
 
@@ -48,17 +49,8 @@ async def get_course_pages(
         )
         return [PageSummary.model_validate(page) for page in data]
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_course_pages_tool: Final[Tool] = Tool.from_function(

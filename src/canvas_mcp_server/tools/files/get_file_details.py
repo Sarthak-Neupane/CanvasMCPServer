@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import FileDetail
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 FileDetailsResponse: TypeAlias = Union[FileDetail, Dict[str, Any]]
 
@@ -42,17 +43,8 @@ async def get_file_details(
             raise Exception("Canvas file response was not an object")
         return FileDetail.model_validate(response.data)
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_file_details_tool: Final[Tool] = Tool.from_function(

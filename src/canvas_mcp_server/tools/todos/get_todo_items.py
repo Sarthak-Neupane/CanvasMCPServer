@@ -9,7 +9,8 @@ from typing import Final, List, Dict, Any, Union, TypeAlias
 from mcp.server.fastmcp.tools import Tool
 
 from ...models import TodoItem
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 TodoItemsResponse: TypeAlias = Union[List[TodoItem], Dict[str, Any]]
 
@@ -30,17 +31,8 @@ async def get_todo_items() -> TodoItemsResponse:
         )
         return [TodoItem.model_validate(item) for item in data]
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_todo_items_tool: Final[Tool] = Tool.from_function(

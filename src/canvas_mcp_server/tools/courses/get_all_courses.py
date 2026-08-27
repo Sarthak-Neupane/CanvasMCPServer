@@ -6,7 +6,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import CourseSummary
-from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client, extract_graphql_data
 
 CoursesResponse: TypeAlias = Union[List[CourseSummary], Dict[str, Any]]
 
@@ -134,17 +135,8 @@ async def get_all_courses(
             ]
         return courses
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_graphql")
 
 
 get_all_courses_tool: Final[Tool] = Tool.from_function(

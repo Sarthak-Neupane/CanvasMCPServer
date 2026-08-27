@@ -1,5 +1,6 @@
 """Regression tests for rubric MCP tools."""
 
+from canvas_mcp_server.errors import ErrorCode
 from canvas_mcp_server.models import Rubric
 from canvas_mcp_server.tools.rubrics._parse import rubric_from_assignment
 from canvas_mcp_server.tools.rubrics.get_assignment_rubric import (
@@ -9,7 +10,7 @@ from tests.fixtures.rubrics import (
     ASSIGNMENT_WITHOUT_RUBRIC_REST,
     ASSIGNMENT_WITH_RUBRIC_REST,
 )
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -48,9 +49,12 @@ async def test_get_assignment_rubric_not_found(canvas_api: CanvasAPIMock) -> Non
 
     result = await get_assignment_rubric("100001", "200002")
 
-    assert isinstance(result, dict)
-    assert result["error"] == "Not Found"
-    assert "no rubric" in result["message"].lower()
+    assert_tool_error(
+        result,
+        ErrorCode.RUBRIC_NOT_FOUND,
+        title="Not Found",
+        message_contains="no rubric",
+    )
 
 
 async def test_get_assignment_rubric_http_error(canvas_api: CanvasAPIMock) -> None:

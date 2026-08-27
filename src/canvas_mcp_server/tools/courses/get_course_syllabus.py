@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import CourseSyllabus
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 CourseSyllabusResponse: TypeAlias = Union[CourseSyllabus, Dict[str, Any]]
 
@@ -50,17 +51,8 @@ async def get_course_syllabus(
             syllabus_course_summary=data.get("syllabus_course_summary"),
         )
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_course_syllabus_tool: Final[Tool] = Tool.from_function(

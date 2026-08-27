@@ -6,7 +6,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import CourseDetail
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 
 CourseResponse: TypeAlias = Union[CourseDetail, Dict[str, Any]]
 
@@ -54,17 +55,8 @@ async def get_course_by_id(
             raise Exception(f"No course found for id: {course_id}")
         return CourseDetail.model_validate(course)
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_graphql")
 
 
 get_course_by_id_tool: Final[Tool] = Tool.from_function(

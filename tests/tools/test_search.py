@@ -1,5 +1,6 @@
 """Regression tests for course content search."""
 
+from canvas_mcp_server.errors import ErrorCode
 from canvas_mcp_server.models import SearchResult
 from canvas_mcp_server.tools.search._rank import score_document
 from canvas_mcp_server.tools.search._snippet import make_snippet
@@ -9,6 +10,7 @@ from tests.fixtures.search import (
     PAGES_SEARCH_REST,
     SYLLABUS_SEARCH_REST,
 )
+from tests.helpers.assertions import assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -53,5 +55,9 @@ async def test_search_course_content_invalid_type(canvas_api: CanvasAPIMock) -> 
         content_types=["invalid"],
     )
 
-    assert isinstance(result, dict)
-    assert result["error"] == "Invalid Request"
+    assert_tool_error(
+        result,
+        ErrorCode.INVALID_ARGUMENT,
+        title="Invalid Argument",
+        message_contains="Unknown content_types",
+    )

@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import QuizSummary
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 from ._parse import sanitize_quiz_api_payload
 
 QuizzesResponse: TypeAlias = Union[List[QuizSummary], Dict[str, Any]]
@@ -54,17 +55,8 @@ async def get_course_quizzes(
             if isinstance(quiz, dict)
         ]
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_course_quizzes_tool: Final[Tool] = Tool.from_function(

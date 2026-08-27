@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import CalendarEvent
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 from ._parse import calendar_event_from_api
 
 CalendarEventsResponse: TypeAlias = Union[List[CalendarEvent], Dict[str, Any]]
@@ -131,17 +132,8 @@ async def get_calendar_events(
         )
         return events
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_calendar_events_tool: Final[Tool] = Tool.from_function(

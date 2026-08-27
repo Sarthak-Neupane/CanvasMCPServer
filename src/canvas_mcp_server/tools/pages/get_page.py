@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import PageDetail
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 from ...utils.html import html_to_text
 from ._params import page_endpoint_segment
 
@@ -53,17 +54,8 @@ async def get_page(
             return detail.model_copy(update={"body_text": html_to_text(detail.body)})
         return detail
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_page_tool: Final[Tool] = Tool.from_function(

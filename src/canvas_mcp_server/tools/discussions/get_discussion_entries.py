@@ -8,9 +8,9 @@ from typing import Final, Dict, Any, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
+from ...errors import as_discussion_tool_error
 from ...models import DiscussionEntries
-from ...utils import canvas_api_client, HTTPError
-from ._errors import discussion_http_error
+from ...utils import canvas_api_client
 from ._parse import discussion_entries_from_view
 
 DiscussionEntriesResponse: TypeAlias = Union[DiscussionEntries, Dict[str, Any]]
@@ -33,8 +33,7 @@ async def get_discussion_entries(
     When the topic requires an initial post, returns a Discussion Locked
     error with lock_reason=require_initial_post instead of a generic 403.
 
-    Returns an error object with "error", "message", and optionally
-    "status_code" keys on failure.
+    On failure returns a structured error object (see docs/errors.md).
     """
     try:
         response = await canvas_api_client.get_rest(
@@ -47,20 +46,8 @@ async def get_discussion_entries(
             raise Exception("Canvas discussion view response was not an object")
         return discussion_entries_from_view(response.data)
 
-    except HTTPError as e:
-        mapped = discussion_http_error(e)
-        if mapped:
-            return mapped
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_discussion_tool_error(e, source="canvas_rest")
 
 
 get_discussion_entries_tool: Final[Tool] = Tool.from_function(

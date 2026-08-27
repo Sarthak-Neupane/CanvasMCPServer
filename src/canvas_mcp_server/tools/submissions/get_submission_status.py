@@ -6,7 +6,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import AssignmentSubmissions, SubmissionStatus
-from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import paginate_graphql_connection
 from ._user import current_user_id
 
@@ -113,17 +114,8 @@ async def get_submission_status(
             submissions=submissions,
         )
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_graphql")
 
 
 get_submission_status_tool: Final[Tool] = Tool.from_function(

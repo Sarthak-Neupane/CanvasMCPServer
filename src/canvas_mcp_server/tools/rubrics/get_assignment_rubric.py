@@ -9,8 +9,9 @@ from typing import Final, Dict, Any, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
+from ...errors import ErrorCode, as_tool_error, tool_error
 from ...models import Rubric
-from ...utils import canvas_api_client, HTTPError
+from ...utils import canvas_api_client
 from ._parse import rubric_from_assignment
 
 RubricResponse: TypeAlias = Union[Rubric, Dict[str, Any]]
@@ -30,10 +31,9 @@ async def get_assignment_rubric(
     Get the rubric for a Canvas assignment.
 
     Returns criteria and rating levels (no student assessment scores).
-    When the assignment has no rubric, returns a Not Found error object.
+    When the assignment has no rubric, returns a structured not-found error.
 
-    Returns an error object with "error", "message", and optionally
-    "status_code" keys on failure.
+    On failure returns a structured error object (see docs/errors.md).
     """
     try:
         response = await canvas_api_client.get_rest(
@@ -45,23 +45,15 @@ async def get_assignment_rubric(
 
         rubric = rubric_from_assignment(response.data)
         if rubric is None:
-            return {
-                "error": "Not Found",
-                "message": "This assignment has no rubric.",
-            }
+            return tool_error(
+                ErrorCode.RUBRIC_NOT_FOUND,
+                "This assignment has no rubric.",
+                source="canvas_rest",
+            ).to_response()
         return rubric
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_assignment_rubric_tool: Final[Tool] = Tool.from_function(

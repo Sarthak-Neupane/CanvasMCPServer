@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from canvas_mcp_server.errors import ErrorCode
 from canvas_mcp_server.models import DownloadBatchResult, DownloadedFile
 from canvas_mcp_server.tools.downloads.download_assignment_files import (
     download_assignment_files,
@@ -22,7 +23,7 @@ from tests.fixtures.files import (
     FILE_LIST_REST,
 )
 from tests.fixtures.modules import MODULE_ITEMS_REST
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -75,9 +76,12 @@ async def test_download_file_rejects_path_traversal(
 ) -> None:
     result = await download_file("500001", "100001", folder="../escape")
 
-    assert isinstance(result, dict)
-    assert result["error"] == "Invalid Argument"
-    assert ".." in result["message"]
+    assert_tool_error(
+        result,
+        ErrorCode.INVALID_ARGUMENT,
+        title="Invalid Argument",
+        message_contains="..",
+    )
 
 
 async def test_download_course_files_batch(
@@ -188,9 +192,12 @@ async def test_download_file_permission_error(canvas_api: CanvasAPIMock) -> None
 
     result = await download_file("500001", "100001")
 
-    assert isinstance(result, dict)
-    assert result["error"] == "Download Error"
-    assert "Forbidden" in result["message"]
+    assert_tool_error(
+        result,
+        ErrorCode.DOWNLOAD_FAILED,
+        title="Download Error",
+        message_contains="Forbidden",
+    )
 
 
 async def test_download_course_files_list_permission_error(

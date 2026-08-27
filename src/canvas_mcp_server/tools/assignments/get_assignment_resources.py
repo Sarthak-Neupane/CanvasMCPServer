@@ -6,7 +6,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import AssignmentResources
-from ...utils import canvas_api_client, HTTPError
+from ...errors import as_tool_error
+from ...utils import canvas_api_client
 from ._resources import parse_assignment_resources_from_html
 
 AssignmentResourcesResponse: TypeAlias = Union[AssignmentResources, Dict[str, Any]]
@@ -53,17 +54,8 @@ async def get_assignment_resources(
             resources=resources,
         )
 
-    except HTTPError as e:
-        return {
-            "error": "HTTP Error",
-            "message": str(e),
-            "status_code": e.status_code,
-        }
     except Exception as e:
-        return {
-            "error": "Unexpected Error",
-            "message": str(e),
-        }
+        return as_tool_error(e, source="canvas_rest")
 
 
 get_assignment_resources_tool: Final[Tool] = Tool.from_function(
