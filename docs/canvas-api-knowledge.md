@@ -175,6 +175,10 @@ Source: [Throttling](https://developerdocs.instructure.com/services/canvas/basic
 - **Not paginated** (single-object endpoints): file/assignment/page/discussion
   detail, syllabus body, submission feedback, rubric include, dashboard cards
   (bounded), discussion topic view.
+- **HTTP client lifecycle**: `canvas_api_client.start()` opens one shared
+  `httpx.AsyncClient` for API and download traffic when the MCP server boots;
+  `canvas_api_client.aclose()` runs on SIGINT/SIGTERM shutdown. Tests and
+  one-off scripts without `start()` fall back to per-request clients.
 
 ### Timestamps (tool output policy)
 

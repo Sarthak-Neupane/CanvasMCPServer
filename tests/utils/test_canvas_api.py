@@ -5,7 +5,7 @@ import pytest
 import respx
 
 from canvas_mcp_server.config import Config
-from canvas_mcp_server.utils.canvas_api import canvas_api_client
+from canvas_mcp_server.utils.canvas_api import CanvasAPIClient, canvas_api_client
 from canvas_mcp_server.utils.http_client import HTTPError
 from tests.fixtures.files import FILE_BYTES
 
@@ -77,6 +77,22 @@ async def test_download_file_to_path_rejects_content_length_over_limit(
         )
 
     assert not destination.exists()
+
+
+@respx.mock
+async def test_canvas_api_client_lifecycle(canvas_download_config) -> None:
+    client = CanvasAPIClient()
+    client.base_url = "https://canvas.example.edu/api"
+
+    await client.start()
+    shared = client._http_client
+    assert shared is not None
+
+    await client.start()
+    assert client._http_client is shared
+
+    await client.aclose()
+    assert client._http_client is None
 
 
 @respx.mock

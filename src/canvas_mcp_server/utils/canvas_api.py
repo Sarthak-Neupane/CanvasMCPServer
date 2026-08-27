@@ -26,6 +26,27 @@ class CanvasAPIClient(BaseHTTPClient):
             timeout=config.get_timeout(),
         )
 
+    async def start(self) -> None:
+        """Open the shared httpx client for the server process lifetime."""
+        if self._http_client is not None:
+            return
+
+        request_timeout = max(
+            config.get_timeout(),
+            config.get_download_timeout(),
+        )
+        self._http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(request_timeout),
+            follow_redirects=True,
+        )
+
+    async def aclose(self) -> None:
+        """Close the shared httpx client during graceful shutdown."""
+        if self._http_client is None:
+            return
+        await self._http_client.aclose()
+        self._http_client = None
+
     async def post_graphql_query(
         self,
         query: str,
@@ -236,57 +257,63 @@ class CanvasAPIClient(BaseHTTPClient):
         request_timeout = timeout or config.get_download_timeout()
         byte_limit = max_bytes if max_bytes is not None else config.get_max_download_bytes()
         headers = config.get_download_headers()
+        ephemeral_client = False
+        http_client = self._http_client
+        if http_client is None:
+            http_client = httpx.AsyncClient(
+                timeout=request_timeout,
+                follow_redirects=True,
+            )
+            ephemeral_client = True
+
         try:
-            async with httpx.AsyncClient(
-                timeout=request_timeout, follow_redirects=True
-            ) as client:
-                async with client.stream("GET", url, headers=headers) as response:
-                    if not (200 <= response.status_code < 300):
-                        body_preview = ""
-                        async for chunk in response.aiter_bytes():
-                            body_preview += chunk.decode("utf-8", errors="replace")
-                            if len(body_preview) >= 500:
-                                break
+            async with http_client.stream("GET", url, headers=headers) as response:
+                if not (200 <= response.status_code < 300):
+                    body_preview = ""
+                    async for chunk in response.aiter_bytes():
+                        body_preview += chunk.decode("utf-8", errors="replace")
+                        if len(body_preview) >= 500:
+                            break
+                    raise HTTPError(
+                        f"HTTP {response.status_code} error",
+                        status_code=response.status_code,
+                        response_data=body_preview,
+                        url=url,
+                    )
+
+                content_length = response.headers.get("content-length")
+                if content_length is not None:
+                    try:
+                        declared_size = int(content_length)
+                    except ValueError:
+                        declared_size = None
+                    if declared_size is not None and declared_size > byte_limit:
                         raise HTTPError(
-                            f"HTTP {response.status_code} error",
+                            f"File exceeds maximum download size of "
+                            f"{byte_limit} bytes",
                             status_code=response.status_code,
-                            response_data=body_preview,
                             url=url,
                         )
 
-                    content_length = response.headers.get("content-length")
-                    if content_length is not None:
-                        try:
-                            declared_size = int(content_length)
-                        except ValueError:
-                            declared_size = None
-                        if declared_size is not None and declared_size > byte_limit:
-                            raise HTTPError(
-                                f"File exceeds maximum download size of "
-                                f"{byte_limit} bytes",
-                                status_code=response.status_code,
-                                url=url,
-                            )
+                bytes_written = 0
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    with destination.open("wb") as handle:
+                        async for chunk in response.aiter_bytes():
+                            bytes_written += len(chunk)
+                            if bytes_written > byte_limit:
+                                raise HTTPError(
+                                    f"File exceeds maximum download size of "
+                                    f"{byte_limit} bytes",
+                                    status_code=response.status_code,
+                                    url=url,
+                                )
+                            handle.write(chunk)
+                except Exception:
+                    destination.unlink(missing_ok=True)
+                    raise
 
-                    bytes_written = 0
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    try:
-                        with destination.open("wb") as handle:
-                            async for chunk in response.aiter_bytes():
-                                bytes_written += len(chunk)
-                                if bytes_written > byte_limit:
-                                    raise HTTPError(
-                                        f"File exceeds maximum download size of "
-                                        f"{byte_limit} bytes",
-                                        status_code=response.status_code,
-                                        url=url,
-                                    )
-                                handle.write(chunk)
-                    except Exception:
-                        destination.unlink(missing_ok=True)
-                        raise
-
-                    return bytes_written
+                return bytes_written
         except httpx.TimeoutException:
             destination.unlink(missing_ok=True)
             raise HTTPError(
@@ -295,6 +322,9 @@ class CanvasAPIClient(BaseHTTPClient):
         except httpx.NetworkError as e:
             destination.unlink(missing_ok=True)
             raise HTTPError(f"Network error: {str(e)}", url=url) from e
+        finally:
+            if ephemeral_client:
+                await http_client.aclose()
 
     async def download_file_bytes(
         self,
@@ -321,25 +351,38 @@ class CanvasAPIClient(BaseHTTPClient):
         config.validate()
         request_timeout = timeout or config.get_download_timeout()
         headers = config.get_download_headers()
+        ephemeral_client = False
+        http_client = self._http_client
+        if http_client is None:
+            http_client = httpx.AsyncClient(
+                timeout=request_timeout,
+                follow_redirects=True,
+            )
+            ephemeral_client = True
+
         try:
-            async with httpx.AsyncClient(
-                timeout=request_timeout, follow_redirects=True
-            ) as client:
-                response = await client.get(url, headers=headers)
-                if not (200 <= response.status_code < 300):
-                    raise HTTPError(
-                        f"HTTP {response.status_code} error",
-                        status_code=response.status_code,
-                        response_data=response.text[:500],
-                        url=url,
-                    )
-                return response.content
+            response = await http_client.get(
+                url,
+                headers=headers,
+                timeout=request_timeout,
+            )
+            if not (200 <= response.status_code < 300):
+                raise HTTPError(
+                    f"HTTP {response.status_code} error",
+                    status_code=response.status_code,
+                    response_data=response.text[:500],
+                    url=url,
+                )
+            return response.content
         except httpx.TimeoutException:
             raise HTTPError(
                 f"Download timeout after {request_timeout}s", url=url
             ) from None
         except httpx.NetworkError as e:
             raise HTTPError(f"Network error: {str(e)}", url=url) from e
+        finally:
+            if ephemeral_client:
+                await http_client.aclose()
 
     def _contextualize_error(self, e: HTTPError) -> HTTPError:
         """Wrap common HTTP errors with Canvas-specific guidance."""

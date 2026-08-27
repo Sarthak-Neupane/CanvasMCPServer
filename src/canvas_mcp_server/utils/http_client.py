@@ -82,6 +82,7 @@ class BaseHTTPClient:
         self.base_url = base_url.rstrip('/')
         self.default_headers = default_headers or {}
         self.timeout = timeout
+        self._http_client: Optional[httpx.AsyncClient] = None
     
     def _build_url(self, endpoint: str) -> str:
         """Build full URL from base URL and endpoint."""
@@ -94,6 +95,111 @@ class BaseHTTPClient:
         if additional_headers:
             headers.update(additional_headers)
         return headers
+
+    def _http_response_from_httpx(
+        self,
+        response: httpx.Response,
+        *,
+        url: str,
+    ) -> HTTPResponse:
+        """Convert an httpx response into the shared HTTPResponse wrapper."""
+        try:
+            response_data = response.json()
+        except (ValueError, httpx.InvalidURL):
+            response_data = response.text
+
+        http_response = HTTPResponse(
+            status_code=response.status_code,
+            data=response_data,
+            headers=dict(response.headers),
+            url=str(response.url),
+        )
+
+        if not http_response.is_success:
+            error_msg = f"HTTP {response.status_code} error"
+            if isinstance(response_data, dict) and "message" in response_data:
+                error_msg += f": {response_data['message']}"
+            elif isinstance(response_data, str):
+                error_msg += f": {response_data[:200]}..."
+
+            raise HTTPError(
+                message=error_msg,
+                status_code=response.status_code,
+                response_data=response_data,
+                url=url,
+            )
+
+        return http_response
+
+    async def _request_with_client(
+        self,
+        client: httpx.AsyncClient,
+        method: str,
+        url: str,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> HTTPResponse:
+        merged_headers = self._merge_headers(headers)
+        request_timeout = timeout or self.timeout
+
+        try:
+            response = await client.request(
+                method=method,
+                url=url,
+                params=params,
+                json=json_data,
+                headers=merged_headers,
+                timeout=request_timeout,
+            )
+            return self._http_response_from_httpx(response, url=url)
+        except httpx.TimeoutException:
+            raise HTTPError(f"Request timeout after {request_timeout}s", url=url)
+        except httpx.NetworkError as e:
+            raise HTTPError(f"Network error: {str(e)}", url=url)
+        except httpx.HTTPStatusError as e:
+            raise HTTPError(
+                f"HTTP error: {e.response.status_code}",
+                status_code=e.response.status_code,
+                url=url,
+            )
+
+    async def _send_request(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: Optional[float] = None,
+    ) -> HTTPResponse:
+        """Send one HTTP request using the shared client when available."""
+        request_timeout = timeout or self.timeout
+
+        if self._http_client is not None:
+            return await self._request_with_client(
+                self._http_client,
+                method,
+                url,
+                params=params,
+                json_data=json_data,
+                headers=headers,
+                timeout=timeout,
+            )
+
+        async with httpx.AsyncClient(timeout=request_timeout) as client:
+            return await self._request_with_client(
+                client,
+                method,
+                url,
+                params=params,
+                json_data=json_data,
+                headers=headers,
+                timeout=timeout,
+            )
     
     async def _make_request(
         self,
@@ -122,62 +228,14 @@ class BaseHTTPClient:
             HTTPError: If the request fails or returns an error status
         """
         url = self._build_url(endpoint)
-        merged_headers = self._merge_headers(headers)
-        request_timeout = timeout or self.timeout
-        
-        try:
-            async with httpx.AsyncClient(timeout=request_timeout) as client:
-                response = await client.request(
-                    method=method,
-                    url=url,
-                    params=params,
-                    json=json_data,
-                    headers=merged_headers
-                )
-                
-                # Parse response data
-                try:
-                    response_data = response.json()
-                except (ValueError, httpx.InvalidURL):
-                    response_data = response.text
-                
-                # Create standardized response
-                http_response = HTTPResponse(
-                    status_code=response.status_code,
-                    data=response_data,
-                    headers=dict(response.headers),
-                    url=str(response.url)
-                )
-                
-                # Raise exception for error status codes
-                if not http_response.is_success:
-                    error_msg = f"HTTP {response.status_code} error"
-                    if isinstance(response_data, dict) and 'message' in response_data:
-                        error_msg += f": {response_data['message']}"
-                    elif isinstance(response_data, str):
-                        error_msg += f": {response_data[:200]}..."
-                    
-                    raise HTTPError(
-                        message=error_msg,
-                        status_code=response.status_code,
-                        response_data=response_data,
-                        url=url
-                    )
-                
-                return http_response
-                
-        except httpx.TimeoutException:
-            raise HTTPError(f"Request timeout after {request_timeout}s", url=url)
-        except httpx.NetworkError as e:
-            raise HTTPError(f"Network error: {str(e)}", url=url)
-        except httpx.HTTPStatusError as e:
-            # This shouldn't happen since we handle status codes above,
-            # but included for completeness
-            raise HTTPError(
-                f"HTTP error: {e.response.status_code}",
-                status_code=e.response.status_code,
-                url=url
-            )
+        return await self._send_request(
+            method,
+            url,
+            params=params,
+            json_data=json_data,
+            headers=headers,
+            timeout=timeout,
+        )
     
     async def get(
         self,
@@ -200,51 +258,12 @@ class BaseHTTPClient:
 
         Used to follow opaque Canvas pagination links from the Link header.
         """
-        merged_headers = self._merge_headers(headers)
-        request_timeout = timeout or self.timeout
-
-        try:
-            async with httpx.AsyncClient(timeout=request_timeout) as client:
-                response = await client.get(url, headers=merged_headers)
-
-                try:
-                    response_data = response.json()
-                except (ValueError, httpx.InvalidURL):
-                    response_data = response.text
-
-                http_response = HTTPResponse(
-                    status_code=response.status_code,
-                    data=response_data,
-                    headers=dict(response.headers),
-                    url=str(response.url),
-                )
-
-                if not http_response.is_success:
-                    error_msg = f"HTTP {response.status_code} error"
-                    if isinstance(response_data, dict) and "message" in response_data:
-                        error_msg += f": {response_data['message']}"
-                    elif isinstance(response_data, str):
-                        error_msg += f": {response_data[:200]}..."
-
-                    raise HTTPError(
-                        message=error_msg,
-                        status_code=response.status_code,
-                        response_data=response_data,
-                        url=url,
-                    )
-
-                return http_response
-
-        except httpx.TimeoutException:
-            raise HTTPError(f"Request timeout after {request_timeout}s", url=url)
-        except httpx.NetworkError as e:
-            raise HTTPError(f"Network error: {str(e)}", url=url)
-        except httpx.HTTPStatusError as e:
-            raise HTTPError(
-                f"HTTP error: {e.response.status_code}",
-                status_code=e.response.status_code,
-                url=url,
-            )
+        return await self._send_request(
+            "GET",
+            url,
+            headers=headers,
+            timeout=timeout,
+        )
     
     async def post(
         self,

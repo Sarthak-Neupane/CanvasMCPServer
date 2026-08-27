@@ -12,6 +12,7 @@ from mcp.server.fastmcp.tools import Tool
 from mcp.server.fastmcp.prompts import Prompt
 
 from .tools import ALL_TOOLS
+from .utils.canvas_api import canvas_api_client
 
 
 async def signal_handler(scope: CancelScope) -> None:
@@ -54,11 +55,14 @@ async def run_server() -> None:
         mcp.add_prompt(prompt)
 
     try:
+        await canvas_api_client.start()
         async with create_task_group() as tg:
             tg.start_soon(signal_handler, tg.cancel_scope)
             await mcp.run_stdio_async()
     except CancelledError:
         print("Server shutdown complete.", file=sys.stderr)
+    finally:
+        await canvas_api_client.aclose()
 
 
 def main() -> None:
