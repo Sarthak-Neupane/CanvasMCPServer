@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 import pytest
 
 from canvas_mcp_server.models import CourseDetail, CourseSyllabus, CourseSummary
@@ -18,15 +16,8 @@ from tests.fixtures.courses import (
     SYLLABUS_EMPTY_REST,
     SYLLABUS_HTML_REST,
 )
+from tests.helpers.assertions import assert_http_error
 from tests.helpers.canvas_mock import CanvasAPIMock
-
-
-def assert_http_error(result: Any, status_code: int) -> Dict[str, Any]:
-    assert isinstance(result, dict)
-    assert result["error"] == "HTTP Error"
-    assert isinstance(result["message"], str)
-    assert result["status_code"] == status_code
-    return result
 
 
 async def test_get_all_courses_graphql_success(canvas_api: CanvasAPIMock) -> None:

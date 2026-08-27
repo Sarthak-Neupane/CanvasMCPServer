@@ -18,3 +18,13 @@ def canvas_api() -> CanvasAPIMock:
     mock = CanvasAPIMock().apply()
     yield mock
     # Restore is not required: each test gets fresh AsyncMocks via apply().
+
+
+@pytest.fixture
+def download_dir(tmp_path, monkeypatch):
+    """Point CANVAS_DOWNLOAD_DIR at a temp directory for download tests."""
+    monkeypatch.setattr(
+        "canvas_mcp_server.config.Config.CANVAS_DOWNLOAD_DIR",
+        str(tmp_path),
+    )
+    return tmp_path
