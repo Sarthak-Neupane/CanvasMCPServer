@@ -161,7 +161,12 @@ uv run mypy src/ --strict        # type checking
 ```
 
 Tests use mocked Canvas responses (`tests/fixtures/`, `tests/helpers/canvas_mock.py`).
-Do not point CI at a real `CANVAS_API_TOKEN`.
+No `CANVAS_API_TOKEN` or `.env` file is required — CI and local runs use empty
+credentials:
+
+```bash
+CANVAS_API_TOKEN= CANVAS_BASE_URL= uv run pytest
+```
 
 ## Project Structure
 
