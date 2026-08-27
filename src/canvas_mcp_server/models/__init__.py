@@ -36,6 +36,8 @@ from .modules.module_item_model import (
     ModuleItemSummary,
 )
 from .modules.module_summary_model import ModuleSummary
+from .pages.page_detail_model import PageDetail
+from .pages.page_summary_model import PageSummary
 from .todos.todo_item_model import TodoAssignmentRef, TodoItem
 
 __all__: Final[List[str]] = [
@@ -80,4 +82,7 @@ __all__: Final[List[str]] = [
     "ModuleItemDetail",
     "CompletionRequirement",
     "ContentDetails",
+    # Pages
+    "PageSummary",
+    "PageDetail",
 ]

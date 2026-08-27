@@ -292,6 +292,12 @@ top-level query for todo items or upcoming events — those are REST-only.
   returns `syllabus_body` (HTML). `syllabus_course_summary` may appear on the
   course object when Canvas exposes it (controls whether the assignment/calendar
   summary block is shown on the syllabus page).
+- **Pages**: `GET /api/v1/courses/:course_id/pages` lists wiki pages (metadata
+  only by default; optional `search_term`, `sort`, `order`). `GET
+  /api/v1/courses/:course_id/pages/:url_or_id` returns a single page including
+  `body` HTML. Accepts a url slug or numeric id — for ids use the
+  `page_id:{id}` form when ambiguous. `get_page` also returns `body_text`
+  (plain text via `html_to_text`).
 - **Files / folders**: `GET /api/v1/courses/:course_id/files` and
   `.../folders`; `GET /api/v1/folders/:folder_id/files`;
   `GET /api/v1/files/:id`. List endpoints support `search_term` and
