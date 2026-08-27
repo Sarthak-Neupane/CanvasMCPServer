@@ -63,6 +63,7 @@ from .quizzes.quiz_summary_model import QuizSummary
 from .rubrics.rubric_criterion_model import RubricCriterion
 from .rubrics.rubric_model import Rubric
 from .rubrics.rubric_rating_model import RubricRating
+from .search.search_result_model import SearchResult
 from .todos.todo_item_model import TodoAssignmentRef, TodoItem
 
 __all__: Final[List[str]] = [
@@ -135,4 +136,6 @@ __all__: Final[List[str]] = [
     "Rubric",
     "RubricCriterion",
     "RubricRating",
+    # Search
+    "SearchResult",
 ]

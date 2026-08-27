@@ -299,6 +299,12 @@ top-level query for todo items or upcoming events — those are REST-only.
   current user's comments, rubric scores, and attachments. `get_submission_status`
   filters GraphQL `submissionsConnection` to the authenticated user so classmate
   submissions are never returned.
+- **Unified search**: `search_course_content(course_id, query, content_types?,
+  limit=10)` fans out to Canvas list endpoints with `search_term` / GraphQL
+  `searchTerm` where available (pages, assignments, modules, announcements,
+  files, quizzes, discussions) plus one syllabus fetch. Results are ranked
+  locally (title match, token overlap, body frequency, recency tie-break) and
+  return bounded snippets only — no full page bodies.
 
 ### REST-only endpoints needed by tools
 

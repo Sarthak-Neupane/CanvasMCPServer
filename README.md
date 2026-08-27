@@ -45,6 +45,7 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_assignment_rubric` | Get an assignment's rubric criteria and rating levels (no student scores). |
 | `get_submission_status` | Check your submission status for an assignment: submitted/late/missing, score and grade. Self only. |
 | `get_submission_feedback` | Get instructor feedback on your submission: comments, rubric scores, attachments. Self only. |
+| `search_course_content` | Search a course across syllabus, pages, assignments, modules, announcements, files, quizzes, and discussions. |
 | `get_course_grades` | Get current and final scores/grades for a course. Students see only their own enrollment (no classmate roster); teachers with grade permission see all students. |
 | `get_announcements` | List a course's announcements (title, message, post date, author). |
 | `get_course_modules` | List modules in a course (structure only: name, position, unlock date, item count, student progression). Optional `search_term`. |
@@ -54,7 +55,7 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 Course, assignment, submission, grade, and announcement data comes from the
 [Canvas GraphQL API](https://developerdocs.instructure.com/services/canvas/basics/file.graphql);
 todo items, upcoming assignments, dashboard (`active_only`) course lists, planner,
-calendar events, discussions, quizzes, rubrics, modules,
+calendar events, discussions, quizzes, rubrics, unified course search, modules,
 syllabi, pages, and files/folders use the REST API where GraphQL does not expose them (or where REST is
 the accurate source of truth).
 

@@ -12,6 +12,7 @@ from .discussions import (
 )
 from .quizzes import get_course_quizzes_tool, get_quiz_tool
 from .rubrics import get_assignment_rubric_tool
+from .search import search_course_content_tool
 from .assignments import (
     get_assignment_details_tool,
     get_assignment_resources_tool,
@@ -60,6 +61,7 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_course_quizzes_tool,
     get_quiz_tool,
     get_assignment_rubric_tool,
+    search_course_content_tool,
     get_course_files_tool,
     get_course_folders_tool,
     get_folder_files_tool,
@@ -97,6 +99,7 @@ __all__: Final[List[str]] = [
     "get_course_quizzes_tool",
     "get_quiz_tool",
     "get_assignment_rubric_tool",
+    "search_course_content_tool",
     "get_course_files_tool",
     "get_course_folders_tool",
     "get_folder_files_tool",
