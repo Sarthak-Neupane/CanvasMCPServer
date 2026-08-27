@@ -11,6 +11,13 @@ from .assignments.assignment_resource_model import (
 from .assignments.assignment_summary_model import AssignmentSummary
 from .assignments.upcoming_assignment_model import UpcomingAssignment
 from .calendar.calendar_event_model import CalendarEvent
+from .discussions.discussion_detail_model import DiscussionDetail
+from .discussions.discussion_entry_model import (
+    DiscussionEntries,
+    DiscussionEntry,
+    DiscussionParticipant,
+)
+from .discussions.discussion_summary_model import DiscussionSummary
 from .courses.course_calendar_model import CalendarLink
 from .courses.course_detail_model import CourseDetail
 from .courses.course_progress_model import CourseProgress
@@ -65,6 +72,12 @@ __all__: Final[List[str]] = [
     "UpcomingAssignment",
     # Calendar
     "CalendarEvent",
+    # Discussions
+    "DiscussionSummary",
+    "DiscussionDetail",
+    "DiscussionEntry",
+    "DiscussionEntries",
+    "DiscussionParticipant",
     # Submissions
     "AssignmentSubmissions",
     "SubmissionStatus",

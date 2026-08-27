@@ -5,6 +5,11 @@ from mcp.server.fastmcp.tools import Tool
 
 from .announcements import get_announcements_tool
 from .calendar import get_calendar_events_tool
+from .discussions import (
+    get_course_discussions_tool,
+    get_discussion_entries_tool,
+    get_discussion_tool,
+)
 from .assignments import (
     get_assignment_details_tool,
     get_assignment_resources_tool,
@@ -47,6 +52,9 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_page_tool,
     get_planner_items_tool,
     get_calendar_events_tool,
+    get_course_discussions_tool,
+    get_discussion_tool,
+    get_discussion_entries_tool,
     get_course_files_tool,
     get_course_folders_tool,
     get_folder_files_tool,
@@ -77,6 +85,9 @@ __all__: Final[List[str]] = [
     "get_page_tool",
     "get_planner_items_tool",
     "get_calendar_events_tool",
+    "get_course_discussions_tool",
+    "get_discussion_tool",
+    "get_discussion_entries_tool",
     "get_course_files_tool",
     "get_course_folders_tool",
     "get_folder_files_tool",

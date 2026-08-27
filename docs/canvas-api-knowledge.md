@@ -273,6 +273,14 @@ top-level query for todo items or upcoming events — those are REST-only.
   `delayedPostAt`, `isAnnouncement`, `contextName`, `author { name }`.
 - REST alternative for multi-course queries: `GET /api/v1/announcements?context_codes[]=course_123`
   (defaults to last 14 days; `start_date`/`end_date`/`latest_only` params).
+- **Discussion topics (REST)**: `GET /api/v1/courses/:course_id/discussion_topics`
+  lists topics (`only_announcements=false`, optional `search_term`, `order_by`,
+  `scope`, `filter_by`). `GET .../discussion_topics/:topic_id` returns one topic
+  including `message` HTML, `require_initial_post`, `user_can_see_posts`,
+  `locked_for_user`, and `lock_explanation`. `GET .../discussion_topics/:topic_id/view`
+  returns threaded `view` entries plus `participants` and `unread_entries`; may
+  respond `403` with body `require_initial_post` when the user must post before
+  viewing replies.
 
 ### REST-only endpoints needed by tools
 
