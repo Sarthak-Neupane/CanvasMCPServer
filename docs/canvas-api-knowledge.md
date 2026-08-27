@@ -160,6 +160,17 @@ Source: [Throttling](https://developerdocs.instructure.com/services/canvas/basic
   omitted when the total count is expensive. If you authenticate via
   `access_token` query param, it is stripped from the returned links.
 
+### Timestamps (tool output policy)
+
+- Canvas REST and GraphQL return datetimes as ISO-8601 strings, usually with a
+  `Z` UTC suffix or a numeric offset.
+- Pydantic `datetime` fields on tool models parse those strings into
+  **timezone-aware** `datetime` values automatically.
+- Do not strip offsets or normalize to naive local time in tools — return what
+  Canvas provides so clients can format in the user's locale.
+- Optional date **filters** passed to tools (`start_date`, `end_date`) accept
+  `yyyy-mm-dd` or full ISO-8601; they are forwarded to Canvas as given.
+
 ### Courses resource (most relevant to current tools)
 
 Source: [Courses](https://developerdocs.instructure.com/services/canvas/resources/courses).
@@ -273,6 +284,15 @@ top-level query for todo items or upcoming events — those are REST-only.
   events and assignments mixed; assignment entries carry an `assignment`
   object (`id`, `name`, `due_at`, `points_possible`, `html_url`,
   `course_id`) plus `context_code` like `course_12942`.
+- **Planner items**: `GET /api/v1/planner/items` — student planner feed
+  (assignments, quizzes, discussions, pages, notes, calendar events, etc.).
+  Query params: `start_date`, `end_date` (inclusive, `yyyy-mm-dd` or ISO-8601),
+  `context_codes[]=course_{id}` to scope to one course, `per_page` (default 10).
+  Each item has `plannable_type`, `plannable_id`, `plannable` (title, `due_at`
+  or `todo_date` for notes), `course_id`, `html_url`, optional `submissions`
+  flags, and `planner_override` (`marked_complete`, `dismissed`). Tools
+  normalize `plannable_type` to student-facing labels (`discussion_topic` →
+  `discussion`, `wiki_page` → `page`, `planner_note` → `note`).
 - **Dashboard / current courses**: `GET /api/v1/dashboard/dashboard_cards` —
   the courses shown on the Canvas dashboard. Prefer this over
   `GET /api/v1/courses?enrollment_state=active`, which can still include

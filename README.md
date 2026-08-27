@@ -35,6 +35,7 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
 | `get_assignment_resources` | Discover files, pages, and external URLs linked in an assignment description (metadata only). |
 | `get_todo_items` | List the user's todo items: assignments to submit (students) or grade (teachers). |
+| `get_planner_items` | List student planner items (assignments, quizzes, discussions, pages, notes) with optional date/course filters. |
 | `get_submission_status` | Check submission status for an assignment: submitted/late/missing, score and grade. Students see their own; teachers see all. |
 | `get_course_grades` | Get current and final scores/grades for a course. Students see only their own enrollment (no classmate roster); teachers with grade permission see all students. |
 | `get_announcements` | List a course's announcements (title, message, post date, author). |
@@ -44,7 +45,8 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 
 Course, assignment, submission, grade, and announcement data comes from the
 [Canvas GraphQL API](https://developerdocs.instructure.com/services/canvas/basics/file.graphql);
-todo items, upcoming assignments, dashboard (`active_only`) course lists, modules,
+todo items, upcoming assignments, dashboard (`active_only`) course lists, planner,
+modules,
 syllabi, pages, and files/folders use the REST API where GraphQL does not expose them (or where REST is
 the accurate source of truth).
 

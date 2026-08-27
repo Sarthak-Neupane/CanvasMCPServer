@@ -34,6 +34,7 @@ from .modules import (
     get_module_items_tool,
 )
 from .pages import get_course_pages_tool, get_page_tool
+from .planner import get_planner_items_tool
 from .submissions import get_submission_status_tool
 from .todos import get_todo_items_tool
 
@@ -43,6 +44,7 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_course_syllabus_tool,
     get_course_pages_tool,
     get_page_tool,
+    get_planner_items_tool,
     get_course_files_tool,
     get_course_folders_tool,
     get_folder_files_tool,
@@ -71,6 +73,7 @@ __all__: Final[List[str]] = [
     "get_course_syllabus_tool",
     "get_course_pages_tool",
     "get_page_tool",
+    "get_planner_items_tool",
     "get_course_files_tool",
     "get_course_folders_tool",
     "get_folder_files_tool",
