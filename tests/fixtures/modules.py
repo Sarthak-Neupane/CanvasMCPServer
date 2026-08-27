@@ -53,3 +53,25 @@ MODULE_ITEMS_REST = [
         "url": "https://canvas.example.edu/api/v1/courses/100001/module_item_redirect/400002",
     },
 ]
+
+MODULE_ITEM_DETAIL_REST = {
+    "id": 400001,
+    "module_id": 300001,
+    "title": "Homework 1",
+    "type": "Assignment",
+    "content_id": 200001,
+    "position": 1,
+    "indent": 0,
+    "completion_requirement": {
+        "type": "must_submit",
+        "completed": False,
+    },
+    "content_details": {
+        "points_possible": 10.0,
+        "due_at": "2025-09-15T23:59:00Z",
+        "unlock_at": "2025-09-01T00:00:00Z",
+        "lock_at": None,
+        "locked_for_user": False,
+        "lock_explanation": None,
+    },
+}
