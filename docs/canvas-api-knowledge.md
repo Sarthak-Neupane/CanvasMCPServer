@@ -304,6 +304,15 @@ top-level query for todo items or upcoming events — those are REST-only.
   `CANVAS_DOWNLOAD_DIR`; only relative subfolders are allowed from tools.
   Assignment materials may be embedded in description HTML (`data-api-endpoint`
   or `/files/:id` links) — parse those ids for `download_assignment_files`.
+- **HTML utilities** (`src/canvas_mcp_server/utils/html.py`):
+  - `html_to_text(html)` — plain text for LLM consumption; strips `script`/`style`.
+  - `extract_canvas_links(html)` — `{href, text}` for every `<a>` tag.
+  - `extract_canvas_resource_references(html)` — ordered resource dicts with
+    `type` (`file`, `page`, `assignment`, `discussion`, `quiz`, `module`,
+    `folder`, `external_url`), `id`, `course_id`, `url`, `label`. Detects
+    course-relative Canvas paths and `data-api-endpoint` instructure embeds.
+    Used by upcoming Pages and `get_assignment_resources` tools; file downloads
+    reuse this via `extract_file_ids_from_html`.
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)

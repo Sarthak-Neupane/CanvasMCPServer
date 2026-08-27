@@ -6,12 +6,8 @@ from typing import List, Optional, Tuple, Union
 
 from ..config import config
 from ..models import DownloadBatchResult, DownloadFailure, DownloadedFile, FileDetail
-from .canvas_api import canvas_api_client, HTTPError
-
-_FILE_ID_PATTERNS = (
-    re.compile(r"/files/(\d+)"),
-    re.compile(r"/courses/\d+/files/(\d+)"),
-)
+from .canvas_api import canvas_api_client
+from .http_client import HTTPError
 
 _UNSAFE_PATH_CHARS = re.compile(r'[<>:"|?*\x00]')
 
@@ -82,17 +78,18 @@ def resolve_download_dir(
 
 def extract_file_ids_from_html(html: Optional[str]) -> List[str]:
     """Extract Canvas file IDs embedded in HTML (descriptions, syllabi)."""
-    if not html:
-        return []
+    from .html import extract_canvas_resource_references
+
+    file_ids: List[str] = []
     seen: set[str] = set()
-    ordered: List[str] = []
-    for pattern in _FILE_ID_PATTERNS:
-        for match in pattern.finditer(html):
-            file_id = match.group(1)
-            if file_id not in seen:
-                seen.add(file_id)
-                ordered.append(file_id)
-    return ordered
+    for reference in extract_canvas_resource_references(html):
+        if reference.get("type") != "file":
+            continue
+        file_id = reference.get("id")
+        if file_id and file_id not in seen:
+            seen.add(file_id)
+            file_ids.append(file_id)
+    return file_ids
 
 
 async def _file_detail_or_error(file_id: str) -> Union[FileDetail, str]:
