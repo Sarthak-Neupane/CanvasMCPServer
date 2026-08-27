@@ -11,9 +11,13 @@ from canvas_mcp_server.models import DownloadBatchResult, DownloadedFile
 from canvas_mcp_server.tools.downloads.download_assignment_files import (
     download_assignment_files,
 )
-from canvas_mcp_server.tools.downloads.download_course_files import download_course_files
+from canvas_mcp_server.tools.downloads.download_course_files import (
+    download_course_files,
+)
 from canvas_mcp_server.tools.downloads.download_file import download_file
-from canvas_mcp_server.tools.downloads.download_module_files import download_module_files
+from canvas_mcp_server.tools.downloads.download_module_files import (
+    download_module_files,
+)
 from tests.fixtures.assignments import ASSIGNMENT_REST_WITH_EMBEDS
 from tests.fixtures.files import (
     ASSIGNMENT_WITH_FILE_EMBED_REST,

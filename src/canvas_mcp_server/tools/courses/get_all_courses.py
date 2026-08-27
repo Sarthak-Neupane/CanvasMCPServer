@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
+from ...errors import as_tool_error
 from ...models import CourseSummary, ListResult
+from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.dashboard import dashboard_course_ids
 from ...utils.list_limits import (
     DEFAULT_LIST_LIMIT,
@@ -17,8 +19,6 @@ from ...utils.list_limits import (
     finalize_list,
     resolve_list_limit,
 )
-from ...errors import as_tool_error
-from ...utils import canvas_api_client, extract_graphql_data
 
 CoursesResponse: TypeAlias = Union[ListResult[CourseSummary], Dict[str, Any]]
 
@@ -90,7 +90,9 @@ async def _term_id_for_name(term_name: str) -> Optional[str]:
     return None
 
 
-async def _courses_for_term(term_name: str, limit: int) -> tuple[List[CourseSummary], bool]:
+async def _courses_for_term(
+    term_name: str, limit: int
+) -> tuple[List[CourseSummary], bool]:
     term_id = await _term_id_for_name(term_name)
     if term_id is None:
         return [], False

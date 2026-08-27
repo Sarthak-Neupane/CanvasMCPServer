@@ -3,16 +3,21 @@
 Uses GET /api/v1/calendar_events (events and assignment due dates).
 """
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import CalendarEvent, ListResult
-from ...utils.dashboard import dashboard_course_ids
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import CalendarEvent, ListResult
 from ...utils import canvas_api_client
+from ...utils.dashboard import dashboard_course_ids
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 from ._parse import calendar_event_from_api
 
 CalendarEventsResponse: TypeAlias = Union[ListResult[CalendarEvent], Dict[str, Any]]

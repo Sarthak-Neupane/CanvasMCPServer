@@ -147,8 +147,6 @@ async def _collect_assignments(course_id: str, query: str) -> List[SearchDocumen
     )
     documents: List[SearchDocument] = []
     for node in paginated.items:
-        if not isinstance(node, dict):
-            continue
         assignment_id = node.get("_id")
         title = str(node.get("name") or "Untitled assignment")
         documents.append(
@@ -185,9 +183,11 @@ async def _collect_modules(course_id: str, query: str) -> List[SearchDocument]:
                 body=title,
                 course_id=course_id,
                 resource_id=str(module_id or ""),
-                url=f"/courses/{course_id}/modules/{module_id}"
-                if module_id is not None
-                else None,
+                url=(
+                    f"/courses/{course_id}/modules/{module_id}"
+                    if module_id is not None
+                    else None
+                ),
             )
         )
     return documents
@@ -217,8 +217,6 @@ async def _collect_announcements(course_id: str, query: str) -> List[SearchDocum
     )
     documents: List[SearchDocument] = []
     for node in paginated.items:
-        if not isinstance(node, dict):
-            continue
         announcement_id = node.get("_id")
         title = str(node.get("title") or "Announcement")
         message = node.get("message") or ""
@@ -230,9 +228,11 @@ async def _collect_announcements(course_id: str, query: str) -> List[SearchDocum
                 body=body,
                 course_id=course_id,
                 resource_id=str(announcement_id or ""),
-                url=_course_discussion_url(course_id, str(announcement_id))
-                if announcement_id
-                else None,
+                url=(
+                    _course_discussion_url(course_id, str(announcement_id))
+                    if announcement_id
+                    else None
+                ),
                 updated_at=node.get("postedAt"),
             )
         )
@@ -252,9 +252,7 @@ async def _collect_files(course_id: str, query: str) -> List[SearchDocument]:
             continue
         file_id = file_obj.get("id")
         title = str(
-            file_obj.get("display_name")
-            or file_obj.get("filename")
-            or "Untitled file"
+            file_obj.get("display_name") or file_obj.get("filename") or "Untitled file"
         )
         documents.append(
             SearchDocument(

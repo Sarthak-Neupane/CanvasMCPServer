@@ -1,19 +1,20 @@
 """Tool for fetching grades in a Canvas course via the GraphQL API."""
 
-from typing import Final, Dict, Any, List, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import CourseGrades, EnrollmentGrade
 from ...errors import as_tool_error
-from ..submissions._user import current_user_id
+from ...models import CourseGrades, EnrollmentGrade
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import (
     DEFAULT_GRAPHQL_MAX_PAGES,
     DEFAULT_GRAPHQL_PAGE_SIZE,
     paginate_graphql_connection,
 )
+from ...utils.pagination_types import PaginatedResult
+from ..submissions._user import current_user_id
 
 CourseGradesResponse: TypeAlias = Union[CourseGrades, Dict[str, Any]]
 
@@ -85,7 +86,9 @@ query ($courseId: ID!, $first: Int!, $after: String) {
 """
 
 
-async def _fetch_all_student_enrollments(course_id: str) -> List[Dict[str, Any]]:
+async def _fetch_all_student_enrollments(
+    course_id: str,
+) -> PaginatedResult[Dict[str, Any]]:
     async def fetch_connection(after: str | None) -> Dict[str, Any]:
         response = await canvas_api_client.post_graphql_query(
             query=ALL_STUDENT_GRADES_QUERY,

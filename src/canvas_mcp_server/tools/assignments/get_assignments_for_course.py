@@ -1,18 +1,23 @@
 """Tool for listing assignments in a Canvas course via the GraphQL API."""
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import AssignmentSummary, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import AssignmentSummary, ListResult
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import (
     DEFAULT_GRAPHQL_MAX_PAGES,
     DEFAULT_GRAPHQL_PAGE_SIZE,
     paginate_graphql_connection,
+)
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
 )
 
 AssignmentsResponse: TypeAlias = Union[ListResult[AssignmentSummary], Dict[str, Any]]
@@ -59,6 +64,7 @@ async def get_assignments_for_course(
     "status_code" keys.
     """
     try:
+
         async def fetch_connection(after: Optional[str]) -> Dict[str, Any]:
             response = await canvas_api_client.post_graphql_query(
                 query=GRAPHQL_QUERY,
@@ -72,7 +78,10 @@ async def get_assignments_for_course(
             course = data.get("course")
             if course is None:
                 raise Exception(f"No course found for id: {course_id}")
-            return course["assignmentsConnection"]
+            connection = course.get("assignmentsConnection")
+            if not isinstance(connection, dict):
+                raise Exception("Canvas assignmentsConnection was not an object")
+            return connection
 
         item_limit = resolve_list_limit(limit)
         paginated = await paginate_graphql_connection(

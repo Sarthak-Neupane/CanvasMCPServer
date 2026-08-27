@@ -44,17 +44,13 @@ class QuizDetail(QuizSummary, UntrustedContentMixin):
     cant_go_back: Annotated[
         Optional[bool],
         Field(
-            description=(
-                "Whether questions lock after answering (one-at-a-time mode)"
-            ),
+            description=("Whether questions lock after answering (one-at-a-time mode)"),
         ),
     ] = None
     question_types: Annotated[
         Optional[List[str]],
         Field(
-            description=(
-                "Question type labels present in the quiz (metadata only)"
-            ),
+            description=("Question type labels present in the quiz (metadata only)"),
         ),
     ] = None
     assignment_group_id: Annotated[

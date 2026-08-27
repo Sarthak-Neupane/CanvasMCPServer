@@ -62,6 +62,24 @@ Automated regression tests: `tests/test_privacy.py` (marker: `privacy`). Run:
 uv run pytest -m privacy
 ```
 
+## Read-only guarantee (v1)
+
+This server is **student read-only** for Canvas data:
+
+- **No** create, update, or delete calls to Canvas (no submission upload, grade
+  change, discussion post, etc.).
+- The only local writes are **`download_*` tools**, which save Canvas-hosted
+  files under `CANVAS_DOWNLOAD_DIR` (default `~/Downloads/Canvas`).
+- Agents should use detail tools for page/assignment HTML; downloads are for
+  binary files only.
+
+## Download safety
+
+- Download URLs must match the configured `CANVAS_BASE_URL` host (HTTPS).
+- Paths are sanitized; `folder` parameters cannot be absolute or contain `..`.
+- Single-file size capped by `CANVAS_MAX_DOWNLOAD_SIZE_MB` (default 100).
+- Streams to disk — full file is not held in memory.
+
 ## Reporting issues
 
 If you find a security or privacy bug, please open a GitHub issue with minimal

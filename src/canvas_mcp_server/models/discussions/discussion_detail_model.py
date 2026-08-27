@@ -18,9 +18,7 @@ class DiscussionDetail(DiscussionSummary, UntrustedContentMixin):
     message_text: Annotated[
         Optional[str],
         Field(
-            description=(
-                "Plain-text version of message (populated by get_discussion)"
-            ),
+            description=("Plain-text version of message (populated by get_discussion)"),
         ),
     ] = None
     user_name: Annotated[

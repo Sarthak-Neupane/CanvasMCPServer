@@ -1,14 +1,14 @@
 """Canvas API client utilities for making Canvas-specific requests."""
 
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import httpx
 
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-
 from ..config import config
-from .http_client import BaseHTTPClient, HTTPResponse, HTTPError
-from .rest_pagination import DEFAULT_MAX_PAGES, DEFAULT_PER_PAGE, parse_link_header
+from .http_client import BaseHTTPClient, HTTPError, HTTPResponse
 from .pagination_types import PaginatedResult
+from .rest_pagination import DEFAULT_MAX_PAGES, DEFAULT_PER_PAGE, parse_link_header
 from .retry_policy import (
     compute_retry_delay,
     should_retry_status,
@@ -218,17 +218,15 @@ class CanvasAPIClient(BaseHTTPClient):
                 if len(items) > max_items:
                     truncated = True
                 sliced = items[:max_items]
-                has_more = bool(
-                    next(
-                        (
-                            value
-                            for key, value in response.headers.items()
-                            if key.lower() == "link"
-                        ),
-                        "",
-                    )
+                link_header_value = next(
+                    (
+                        value
+                        for key, value in response.headers.items()
+                        if key.lower() == "link"
+                    ),
+                    "",
                 )
-                if has_more and "rel=\"next\"" in has_more:
+                if link_header_value and 'rel="next"' in link_header_value:
                     truncated = True
                 return PaginatedResult(items=sliced, truncated=truncated)
 
@@ -278,7 +276,9 @@ class CanvasAPIClient(BaseHTTPClient):
         """
         config.validate()
         request_timeout = timeout or config.get_download_timeout()
-        byte_limit = max_bytes if max_bytes is not None else config.get_max_download_bytes()
+        byte_limit = (
+            max_bytes if max_bytes is not None else config.get_max_download_bytes()
+        )
         headers = config.get_download_headers()
         ephemeral_client = False
         http_client = self._http_client
@@ -308,9 +308,7 @@ class CanvasAPIClient(BaseHTTPClient):
                                 and attempt < max_attempts - 1
                             ):
                                 retryable_status = True
-                                retry_after_header = response.headers.get(
-                                    "Retry-After"
-                                )
+                                retry_after_header = response.headers.get("Retry-After")
                             else:
                                 body_preview = ""
                                 async for chunk in response.aiter_bytes():

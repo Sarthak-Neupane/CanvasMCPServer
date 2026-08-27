@@ -21,7 +21,9 @@ def test_extract_graphql_data_errors_array() -> None:
         url="https://canvas.example.edu/api/graphql",
     )
 
-    with pytest.raises(HTTPError, match="Canvas GraphQL error: Cannot query field 'foo'"):
+    with pytest.raises(
+        HTTPError, match="Canvas GraphQL error: Cannot query field 'foo'"
+    ):
         extract_graphql_data(response)
 
 
@@ -35,5 +37,7 @@ def test_extract_graphql_data_missing_data() -> None:
 def test_extract_graphql_data_non_object_body() -> None:
     response = make_http_response("not json object")
 
-    with pytest.raises(HTTPError, match="Canvas GraphQL response was not a JSON object"):
+    with pytest.raises(
+        HTTPError, match="Canvas GraphQL response was not a JSON object"
+    ):
         extract_graphql_data(response)

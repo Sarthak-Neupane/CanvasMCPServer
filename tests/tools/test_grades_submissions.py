@@ -9,7 +9,9 @@ from canvas_mcp_server.models import (
 )
 from canvas_mcp_server.tools.announcements.get_announcements import get_announcements
 from canvas_mcp_server.tools.grades.get_course_grades import get_course_grades
-from canvas_mcp_server.tools.submissions.get_submission_status import get_submission_status
+from canvas_mcp_server.tools.submissions.get_submission_status import (
+    get_submission_status,
+)
 from tests.fixtures.announcements import (
     ANNOUNCEMENTS_GRAPHQL,
     ANNOUNCEMENTS_PAGE_1,

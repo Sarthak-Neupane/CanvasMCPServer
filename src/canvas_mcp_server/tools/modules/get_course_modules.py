@@ -4,26 +4,29 @@ Uses GET /api/v1/courses/:course_id/modules. Returns structure only — never
 requests include[]=items (use get_module_items for item inventory).
 """
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import ModuleSummary, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import ListResult, ModuleSummary
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 
-ModulesResponse: TypeAlias = Union[List[ModuleSummary], Dict[str, Any]]
+ModulesResponse: TypeAlias = Union[ListResult[ModuleSummary], Dict[str, Any]]
 
 
 async def get_course_modules(
     course_id: Annotated[
         str,
         Field(
-            description=(
-                "The course ID (numeric Canvas ID, e.g. '182571')."
-            ),
+            description=("The course ID (numeric Canvas ID, e.g. '182571')."),
         ),
     ],
     search_term: Annotated[
@@ -58,7 +61,9 @@ async def get_course_modules(
             max_items=resolve_list_limit(limit),
         )
         items = [ModuleSummary.model_validate(module) for module in paginated.items]
-        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
+        return finalize_list(
+            items, resolve_list_limit(limit), truncated=paginated.truncated
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

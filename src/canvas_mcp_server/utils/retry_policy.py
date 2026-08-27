@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Optional
 
-
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_RETRY_BASE_DELAY_SECONDS = 1.0
 
@@ -52,8 +51,8 @@ def compute_retry_delay(
     backoff = base_delay * (2**attempt)
     header_delay = parse_retry_after(retry_after)
     if header_delay is not None:
-        return max(backoff, header_delay)
-    return backoff
+        return float(max(backoff, header_delay))
+    return float(backoff)
 
 
 async def sleep_before_retry(delay_seconds: float) -> None:

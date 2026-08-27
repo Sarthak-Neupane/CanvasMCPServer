@@ -4,13 +4,13 @@ Uses GET /api/v1/courses/:course_id/modules/:module_id/items/:id with
 include[]=content_details.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import ModuleItemDetail
 from ...errors import as_tool_error
+from ...models import ModuleItemDetail
 from ...utils import canvas_api_client
 
 ModuleItemDetailsResponse: TypeAlias = Union[ModuleItemDetail, Dict[str, Any]]
@@ -20,17 +20,13 @@ async def get_module_item_details(
     course_id: Annotated[
         str,
         Field(
-            description=(
-                "The course ID (numeric Canvas ID, e.g. '182571')."
-            ),
+            description=("The course ID (numeric Canvas ID, e.g. '182571')."),
         ),
     ],
     module_id: Annotated[
         str,
         Field(
-            description=(
-                "The module ID (numeric Canvas ID from get_course_modules)."
-            ),
+            description=("The module ID (numeric Canvas ID from get_course_modules)."),
         ),
     ],
     item_id: Annotated[
@@ -54,9 +50,7 @@ async def get_module_item_details(
     """
     try:
         response = await canvas_api_client.get_rest(
-            endpoint=(
-                f"v1/courses/{course_id}/modules/{module_id}/items/{item_id}"
-            ),
+            endpoint=(f"v1/courses/{course_id}/modules/{module_id}/items/{item_id}"),
             params={"include[]": "content_details"},
         )
         if not isinstance(response.data, dict):

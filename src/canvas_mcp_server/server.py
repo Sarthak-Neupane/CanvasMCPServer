@@ -2,18 +2,18 @@
 
 import signal
 import sys
-from typing import List
 from asyncio import CancelledError
+from typing import List
 
 from anyio import create_task_group, open_signal_receiver, run
 from anyio.abc import CancelScope
 from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.tools import Tool
 from mcp.server.fastmcp.prompts import Prompt
+from mcp.server.fastmcp.tools import Tool
 
-from .utils.redaction import redact_sensitive_text
 from .tools import ALL_TOOLS
 from .utils.canvas_api import canvas_api_client
+from .utils.redaction import redact_sensitive_text
 
 
 async def signal_handler(scope: CancelScope) -> None:
@@ -23,13 +23,16 @@ async def signal_handler(scope: CancelScope) -> None:
     The anyio.open_signal_receiver returns an async generator that yields signal numbers
     whenever a specified signal is received. The async for loop waits for signals and processes
     them as they arrive.
-    
+
     Args:
         scope: The cancel scope to use for graceful shutdown.
     """
     with open_signal_receiver(signal.SIGINT, signal.SIGTERM) as signals:
         async for sig_num in signals:  # shutting down regardless of the signal type
-            print(f"Received signal {sig_num}, shutting down gracefully...", file=sys.stderr)
+            print(
+                f"Received signal {sig_num}, shutting down gracefully...",
+                file=sys.stderr,
+            )
             scope.cancel()
             return
 
@@ -37,7 +40,7 @@ async def signal_handler(scope: CancelScope) -> None:
 async def run_server() -> None:
     """
     Run the MCP server with signal handling.
-    
+
     Raises:
         Exception: If server startup or operation fails.
     """
@@ -69,7 +72,7 @@ async def run_server() -> None:
 def main() -> None:
     """
     Main entry point for the Canvas MCP Server.
-    
+
     This function does not return as it runs the async server loop.
     """
     try:
@@ -78,6 +81,7 @@ def main() -> None:
     except Exception as e:
         print(f"Error in main: {redact_sensitive_text(str(e))}", file=sys.stderr)
         import traceback
+
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)
 

@@ -1,12 +1,12 @@
 """Tool for checking submission status of a Canvas assignment via the GraphQL API."""
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import AssignmentSubmissions, SubmissionStatus
 from ...errors import as_tool_error
+from ...models import AssignmentSubmissions, SubmissionStatus
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import paginate_graphql_connection
 from ._user import current_user_id

@@ -1,6 +1,6 @@
 """Tool for unified course content search."""
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field

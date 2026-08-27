@@ -48,9 +48,7 @@ class FolderSummary(BaseModel):
     for_submissions: Annotated[
         Optional[bool],
         Field(
-            description=(
-                "True when this is a read-only submissions folder"
-            ),
+            description=("True when this is a read-only submissions folder"),
         ),
     ] = None
     files_url: Annotated[

@@ -1,27 +1,29 @@
 """Tool for listing announcements in a Canvas course via the GraphQL API."""
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
+from ...errors import as_tool_error
 from ...models import AnnouncementSummary, ListResult
+from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.content_metadata import attach_content_metadata
+from ...utils.graphql_pagination import (
+    DEFAULT_GRAPHQL_MAX_PAGES,
+    DEFAULT_GRAPHQL_PAGE_SIZE,
+    paginate_graphql_connection,
+)
 from ...utils.list_limits import (
     DEFAULT_LIST_LIMIT,
     ListLimitField,
     finalize_list,
     resolve_list_limit,
 )
-from ...errors import as_tool_error
-from ...utils import canvas_api_client, extract_graphql_data
-from ...utils.graphql_pagination import (
-    DEFAULT_GRAPHQL_MAX_PAGES,
-    DEFAULT_GRAPHQL_PAGE_SIZE,
-    paginate_graphql_connection,
-)
 
-AnnouncementsResponse: TypeAlias = Union[ListResult[AnnouncementSummary], Dict[str, Any]]
+AnnouncementsResponse: TypeAlias = Union[
+    ListResult[AnnouncementSummary], Dict[str, Any]
+]
 
 GRAPHQL_QUERY = """
 query ($courseId: ID!, $first: Int!, $after: String, $searchTerm: String) {

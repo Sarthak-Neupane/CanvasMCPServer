@@ -3,15 +3,20 @@
 Uses GET /api/v1/planner/items.
 """
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import PlannerItem, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import ListResult, PlannerItem
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 from ._parse import planner_item_from_api
 
 PlannerItemsResponse: TypeAlias = Union[ListResult[PlannerItem], Dict[str, Any]]
@@ -73,7 +78,11 @@ async def get_planner_items(
             max_items=item_limit,
         )
 
-        items = [planner_item_from_api(item) for item in paginated.items if isinstance(item, dict)]
+        items = [
+            planner_item_from_api(item)
+            for item in paginated.items
+            if isinstance(item, dict)
+        ]
         return finalize_list(items, item_limit, truncated=paginated.truncated)
 
     except Exception as e:

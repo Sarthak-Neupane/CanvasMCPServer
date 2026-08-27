@@ -19,9 +19,7 @@ async def dashboard_course_ids() -> Set[str]:
         if not isinstance(cards, list):
             raise Exception("Canvas dashboard_cards response was not a list")
         return {
-            str(card["id"])
-            for card in cards
-            if isinstance(card, dict) and "id" in card
+            str(card["id"]) for card in cards if isinstance(card, dict) and "id" in card
         }
 
     return await cached_fetch("dashboard", "course_ids", _fetch)

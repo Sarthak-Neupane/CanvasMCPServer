@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar, cast
 
 from ..config import Config
 
@@ -46,9 +46,7 @@ class TokenBoundedCache:
         return (self._token_fingerprint(), namespace, *key_parts)
 
     def _evict_expired(self, now: float) -> None:
-        expired = [
-            key for key, entry in self._store.items() if entry.expires_at <= now
-        ]
+        expired = [key for key, entry in self._store.items() if entry.expires_at <= now]
         for key in expired:
             del self._store[key]
 
@@ -97,7 +95,7 @@ async def cached_fetch(
     """Return a cached value or fetch and store it."""
     cached = token_cache.get(namespace, key)
     if cached is not None:
-        return cached
+        return cast(T, cached)
     value = await fetch()
     token_cache.set(namespace, value, key, ttl=ttl)
     return value

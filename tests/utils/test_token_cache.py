@@ -1,6 +1,10 @@
 """Tests for the in-process token cache."""
 
-from canvas_mcp_server.utils.token_cache import TokenBoundedCache, cached_fetch, token_cache
+from canvas_mcp_server.utils.token_cache import (
+    TokenBoundedCache,
+    cached_fetch,
+    token_cache,
+)
 
 
 def test_token_cache_expires_entries(monkeypatch) -> None:
@@ -10,7 +14,9 @@ def test_token_cache_expires_entries(monkeypatch) -> None:
     def fake_monotonic() -> float:
         return now["value"]
 
-    monkeypatch.setattr("canvas_mcp_server.utils.token_cache.time.monotonic", fake_monotonic)
+    monkeypatch.setattr(
+        "canvas_mcp_server.utils.token_cache.time.monotonic", fake_monotonic
+    )
     cache.set("ns", "value", "key")
     assert cache.get("ns", "key") == "value"
 

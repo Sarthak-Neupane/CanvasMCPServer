@@ -1,6 +1,6 @@
 """Regression tests for get_assignment_resources."""
 
-from canvas_mcp_server.models import AssignmentResourceType, AssignmentResources
+from canvas_mcp_server.models import AssignmentResources, AssignmentResourceType
 from canvas_mcp_server.tools.assignments._resources import (
     parse_assignment_resources_from_html,
 )

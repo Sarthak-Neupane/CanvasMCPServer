@@ -3,13 +3,13 @@
 Uses GET /api/v1/courses/:course_id/assignments/:assignment_id/submissions/self
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import SubmissionFeedback
 from ...errors import as_tool_error
+from ...models import SubmissionFeedback
 from ...utils import canvas_api_client
 from ._parse import submission_feedback_from_api
 

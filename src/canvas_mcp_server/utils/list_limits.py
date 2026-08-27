@@ -6,8 +6,8 @@ from typing import Annotated, Sequence, TypeVar
 
 from pydantic import Field
 
-from .list_results import list_result
 from ..models.common.list_result_model import ListResult
+from .list_results import list_result
 
 DEFAULT_LIST_LIMIT = 50
 MAX_LIST_LIMIT = 100

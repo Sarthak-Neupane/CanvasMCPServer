@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from canvas_mcp_server.models import CourseDetail, CourseSyllabus, CourseSummary
+from canvas_mcp_server.models import CourseDetail, CourseSummary, CourseSyllabus
 from canvas_mcp_server.tools.courses.get_all_courses import get_all_courses
 from canvas_mcp_server.tools.courses.get_course_syllabus import get_course_syllabus
 from canvas_mcp_server.tools.courses.get_courses_by_id import get_course_by_id

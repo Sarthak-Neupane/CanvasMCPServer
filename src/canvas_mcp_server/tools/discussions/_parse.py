@@ -14,8 +14,6 @@ def _participant_map(
 ) -> Dict[int, str]:
     names: Dict[int, str] = {}
     for participant in participants:
-        if not isinstance(participant, dict):
-            continue
         user_id = participant.get("id")
         display_name = participant.get("display_name")
         if user_id is not None and display_name:

@@ -1,12 +1,12 @@
 """Tool for discovering resources linked in a Canvas assignment description."""
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import AssignmentResources
 from ...errors import as_tool_error
+from ...models import AssignmentResources
 from ...utils import canvas_api_client
 from ._resources import parse_assignment_resources_from_html
 

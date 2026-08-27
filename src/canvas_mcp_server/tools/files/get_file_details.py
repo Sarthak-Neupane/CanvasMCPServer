@@ -3,13 +3,13 @@
 Uses GET /api/v1/files/:file_id.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import FileDetail
 from ...errors import as_tool_error
+from ...models import FileDetail
 from ...utils import canvas_api_client
 
 FileDetailsResponse: TypeAlias = Union[FileDetail, Dict[str, Any]]

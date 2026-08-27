@@ -3,15 +3,15 @@
 Uses GET /api/v1/courses/:course_id/quizzes/:id.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import QuizDetail
 from ...errors import as_tool_error
-from ...utils.content_metadata import attach_content_metadata
+from ...models import QuizDetail
 from ...utils import canvas_api_client
+from ...utils.content_metadata import attach_content_metadata
 from ...utils.html import html_to_text
 from ._parse import sanitize_quiz_api_payload
 
@@ -44,9 +44,7 @@ async def get_quiz(
         if not isinstance(response.data, dict):
             raise Exception("Canvas quiz response was not an object")
 
-        detail = QuizDetail.model_validate(
-            sanitize_quiz_api_payload(response.data)
-        )
+        detail = QuizDetail.model_validate(sanitize_quiz_api_payload(response.data))
         if detail.description:
             detail = detail.model_copy(
                 update={"description_text": html_to_text(detail.description)}

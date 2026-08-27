@@ -21,9 +21,7 @@ class Rubric(BaseModel):
     use_rubric_for_grading: Annotated[
         Optional[bool],
         Field(
-            description=(
-                "Whether the rubric is used for grading vs advisory only"
-            ),
+            description=("Whether the rubric is used for grading vs advisory only"),
         ),
     ] = None
     criteria: Annotated[

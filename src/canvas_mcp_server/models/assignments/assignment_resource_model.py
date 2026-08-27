@@ -27,9 +27,7 @@ class AssignmentResource(BaseModel):
     id: Annotated[
         Optional[str],
         Field(
-            description=(
-                "Numeric Canvas id for most types; page url slug for pages"
-            ),
+            description=("Numeric Canvas id for most types; page url slug for pages"),
         ),
     ] = None
     course_id: Annotated[

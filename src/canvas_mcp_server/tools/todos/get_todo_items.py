@@ -4,15 +4,20 @@ The GraphQL schema does not expose todo items, so this tool uses the REST
 endpoint GET /api/v1/users/self/todo.
 """
 
-from typing import Final, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import TodoItem, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import ListResult, TodoItem
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 
 TodoItemsResponse: TypeAlias = Union[ListResult[TodoItem], Dict[str, Any]]
 

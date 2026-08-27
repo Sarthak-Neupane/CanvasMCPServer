@@ -101,12 +101,8 @@ async def test_canvas_api_client_lifecycle(canvas_download_config) -> None:
 async def test_get_rest_paginated_follows_link_header(
     canvas_download_config,
 ) -> None:
-    page_one_url = (
-        "https://canvas.example.edu/api/v1/courses/1/files?per_page=1"
-    )
-    page_two_url = (
-        "https://canvas.example.edu/api/v1/courses/1/files?per_page=1&page=2"
-    )
+    page_one_url = "https://canvas.example.edu/api/v1/courses/1/files?per_page=1"
+    page_two_url = "https://canvas.example.edu/api/v1/courses/1/files?per_page=1&page=2"
     link_header = f'<{page_two_url}>; rel="next"'
 
     respx.get(page_one_url).mock(

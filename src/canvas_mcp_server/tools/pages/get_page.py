@@ -3,15 +3,15 @@
 Uses GET /api/v1/courses/:course_id/pages/:url_or_id.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import PageDetail
 from ...errors import as_tool_error
-from ...utils.content_metadata import attach_content_metadata
+from ...models import PageDetail
 from ...utils import canvas_api_client
+from ...utils.content_metadata import attach_content_metadata
 from ...utils.html import html_to_text
 from ._params import page_endpoint_segment
 

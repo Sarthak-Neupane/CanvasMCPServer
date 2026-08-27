@@ -3,15 +3,15 @@
 Uses GET /api/v1/courses/:course_id/discussion_topics/:topic_id.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...errors import as_discussion_tool_error
 from ...models import DiscussionDetail
-from ...utils.content_metadata import attach_content_metadata
 from ...utils import canvas_api_client
+from ...utils.content_metadata import attach_content_metadata
 from ...utils.html import html_to_text
 
 DiscussionResponse: TypeAlias = Union[DiscussionDetail, Dict[str, Any]]
@@ -37,9 +37,7 @@ async def get_discussion(
     """
     try:
         response = await canvas_api_client.get_rest(
-            endpoint=(
-                f"v1/courses/{course_id}/discussion_topics/{discussion_id}"
-            ),
+            endpoint=(f"v1/courses/{course_id}/discussion_topics/{discussion_id}"),
         )
         if not isinstance(response.data, dict):
             raise Exception("Canvas discussion response was not an object")

@@ -3,15 +3,20 @@
 Uses GET /api/v1/courses/:course_id/files.
 """
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import FileSummary, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import FileSummary, ListResult
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 from ._params import build_file_list_params
 
 CourseFilesResponse: TypeAlias = Union[ListResult[FileSummary], Dict[str, Any]]
@@ -57,7 +62,9 @@ async def get_course_files(
             max_items=resolve_list_limit(limit),
         )
         items = [FileSummary.model_validate(item) for item in paginated.items]
-        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
+        return finalize_list(
+            items, resolve_list_limit(limit), truncated=paginated.truncated
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

@@ -30,9 +30,7 @@ class DiscussionSummary(BaseModel):
     require_initial_post: Annotated[
         Optional[bool],
         Field(
-            description=(
-                "When true, the user must post before viewing other replies"
-            ),
+            description=("When true, the user must post before viewing other replies"),
         ),
     ] = None
     user_can_see_posts: Annotated[
@@ -90,8 +88,6 @@ class DiscussionSummary(BaseModel):
     subscription_hold: Annotated[
         Optional[str],
         Field(
-            description=(
-                "Why the user cannot subscribe, e.g. initial_post_required"
-            ),
+            description=("Why the user cannot subscribe, e.g. initial_post_required"),
         ),
     ] = None

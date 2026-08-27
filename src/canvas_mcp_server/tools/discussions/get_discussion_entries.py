@@ -3,7 +3,7 @@
 Uses GET /api/v1/courses/:course_id/discussion_topics/:topic_id/view.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
@@ -38,8 +38,7 @@ async def get_discussion_entries(
     try:
         response = await canvas_api_client.get_rest(
             endpoint=(
-                f"v1/courses/{course_id}/discussion_topics/"
-                f"{discussion_id}/view"
+                f"v1/courses/{course_id}/discussion_topics/" f"{discussion_id}/view"
             ),
         )
         if not isinstance(response.data, dict):

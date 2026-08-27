@@ -3,9 +3,7 @@
 import re
 from typing import Final
 
-_COURSE_PAGE_PATH_RE: Final = re.compile(
-    r"/courses/\d+/pages/(?P<slug>[^/?#]+)"
-)
+_COURSE_PAGE_PATH_RE: Final = re.compile(r"/courses/\d+/pages/(?P<slug>[^/?#]+)")
 
 
 def normalize_page_locator(page_id_or_url: str) -> str:

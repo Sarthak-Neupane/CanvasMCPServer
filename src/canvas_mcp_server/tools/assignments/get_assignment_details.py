@@ -1,14 +1,14 @@
 """Tool for fetching details of a single Canvas assignment via the GraphQL API."""
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import AssignmentDetail
 from ...errors import as_tool_error
-from ...utils.content_metadata import attach_content_metadata
+from ...models import AssignmentDetail
 from ...utils import canvas_api_client, extract_graphql_data
+from ...utils.content_metadata import attach_content_metadata
 
 AssignmentDetailResponse: TypeAlias = Union[AssignmentDetail, Dict[str, Any]]
 

@@ -1,12 +1,12 @@
 """Tool for fetching a single Canvas course via the GraphQL API."""
 
-from typing import Final, TypeAlias, Union, Dict, Any, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import CourseDetail
 from ...errors import as_tool_error
+from ...models import CourseDetail
 from ...utils import canvas_api_client
 
 CourseResponse: TypeAlias = Union[CourseDetail, Dict[str, Any]]

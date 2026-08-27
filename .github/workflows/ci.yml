@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  pytest:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,6 +19,15 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --extra dev
+
+      - name: Check formatting (black)
+        run: uv run black --check src/ tests/
+
+      - name: Check import order (isort)
+        run: uv run isort --check-only src/ tests/
+
+      - name: Type check (mypy --strict)
+        run: uv run mypy src/ --strict
 
       - name: Run tests (no Canvas credentials)
         env:

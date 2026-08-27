@@ -18,7 +18,7 @@ class ToolError(BaseModel):
     Serialized responses always include ``code``, ``message``, ``title`` (short
     label), and ``retryable``. The legacy ``error`` key mirrors ``title`` for
     backward compatibility with earlier tool versions.
-  """
+    """
 
     model_config = ConfigDict(extra="forbid")
 

@@ -47,7 +47,7 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_submission_feedback` | Get instructor feedback on your submission: comments, rubric scores, attachments. Self only. |
 | `search_course_content` | Search a course across syllabus, pages, assignments, modules, announcements, files, quizzes, and discussions. |
 | `get_course_grades` | Get current and final scores/grades for a course. Students see only their own enrollment (no classmate roster); teachers with grade permission see all students. |
-| `get_announcements` | List a course's announcements (title, message, post date, author). |
+| `get_announcements` | List a course's announcements (title, post date, author). Use `get_discussion` for full message. |
 | `get_course_modules` | List modules in a course (structure only: name, position, unlock date, item count, student progression). Optional `search_term`. |
 | `get_module_items` | List items in a module (File, Page, Assignment, Quiz, etc.) with completion requirements. Optional `search_term`. |
 | `get_module_item_details` | Get one module item with `content_details` (points, due/lock dates, lock explanation). |
@@ -244,25 +244,31 @@ canvas-mcp-server/
 ├── src/canvas_mcp_server/
 │   ├── server.py          # FastMCP server setup, tool registration, entry point
 │   ├── config.py          # Environment configuration (.env)
-│   ├── tools/courses/     # MCP tools (one file per tool)
-│   ├── models/courses/    # Pydantic models for Canvas responses
+│   ├── tools/             # MCP tools (one file per tool)
+│   ├── models/            # Pydantic models for Canvas responses
+│   ├── errors/            # Structured error codes and mappers
 │   ├── constants/         # Canvas enums (workflow states, enrollment types, ...)
-│   └── utils/             # HTTP + Canvas GraphQL client
-├── docs/                  # Canvas API reference notes
+│   └── utils/             # HTTP + Canvas client, HTML, downloads, pagination
+├── docs/                  # Architecture, tools, errors, API notes
+├── .github/workflows/     # CI (pytest, black, isort, mypy)
 ├── scripts/               # Development scripts
-└── tests/                 # Test suite
+└── tests/                 # Test suite (mocked Canvas)
 ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Make your changes — keep commits small and feature-scoped
-4. Run tests (`uv run pytest`) and type checks (`uv run mypy src/ --strict`)
-5. Open a Pull Request
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, architecture overview, and the
+new-tool checklist. Key docs:
 
-Never commit `.env` or real API tokens. See `docs/canvas-api-knowledge.md` for a
-summary of the Canvas API used by this project.
+| Doc | Purpose |
+| --- | --- |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, PR workflow, new tool checklist |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, GraphQL vs REST |
+| [docs/tools.md](docs/tools.md) | Per-tool reference (all 34 tools) |
+| [docs/install-validation.md](docs/install-validation.md) | Fresh install + MCP wiring checklist |
+| [SECURITY.md](SECURITY.md) | Token handling, privacy, read-only guarantee |
+
+Quick start: fork → branch → `uv run pytest` + `uv run mypy src/ --strict` → PR.
 
 ## License
 

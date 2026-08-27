@@ -1,28 +1,26 @@
 """Canvas MCP Server tools package."""
 
 from typing import Final, List
+
 from mcp.server.fastmcp.tools import Tool
 
 from .announcements import get_announcements_tool
-from .calendar import get_calendar_events_tool
-from .discussions import (
-    get_course_discussions_tool,
-    get_discussion_entries_tool,
-    get_discussion_tool,
-)
-from .quizzes import get_course_quizzes_tool, get_quiz_tool
-from .rubrics import get_assignment_rubric_tool
-from .search import search_course_content_tool
 from .assignments import (
     get_assignment_details_tool,
     get_assignment_resources_tool,
     get_assignments_for_course_tool,
     get_upcoming_assignments_tool,
 )
+from .calendar import get_calendar_events_tool
 from .courses import (
     get_all_courses_tool,
     get_course_by_id_tool,
     get_course_syllabus_tool,
+)
+from .discussions import (
+    get_course_discussions_tool,
+    get_discussion_entries_tool,
+    get_discussion_tool,
 )
 from .downloads import (
     download_assignment_files_tool,
@@ -44,6 +42,9 @@ from .modules import (
 )
 from .pages import get_course_pages_tool, get_page_tool
 from .planner import get_planner_items_tool
+from .quizzes import get_course_quizzes_tool, get_quiz_tool
+from .rubrics import get_assignment_rubric_tool
+from .search import search_course_content_tool
 from .submissions import get_submission_feedback_tool, get_submission_status_tool
 from .todos import get_todo_items_tool
 

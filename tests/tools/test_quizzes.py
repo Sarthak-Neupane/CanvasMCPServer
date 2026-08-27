@@ -4,7 +4,7 @@ from canvas_mcp_server.models import QuizDetail, QuizSummary
 from canvas_mcp_server.tools.quizzes._parse import sanitize_quiz_api_payload
 from canvas_mcp_server.tools.quizzes.get_course_quizzes import get_course_quizzes
 from canvas_mcp_server.tools.quizzes.get_quiz import get_quiz
-from tests.fixtures.quizzes import QUIZZES_LIST_REST, QUIZ_DETAIL_REST
+from tests.fixtures.quizzes import QUIZ_DETAIL_REST, QUIZZES_LIST_REST
 from tests.helpers.assertions import assert_http_error, assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 

@@ -47,7 +47,9 @@ class AssignmentDetail(AssignmentSummary, UntrustedContentMixin):
     ] = None
     allowedAttempts: Annotated[
         Optional[int],
-        Field(description="Number of allowed submission attempts (null means unlimited)"),
+        Field(
+            description="Number of allowed submission attempts (null means unlimited)"
+        ),
     ] = None
     course: Annotated[
         Optional[AssignmentCourseRef],

@@ -13,14 +13,18 @@ from canvas_mcp_server.tools.discussions.get_discussion import get_discussion
 from canvas_mcp_server.tools.discussions.get_discussion_entries import (
     get_discussion_entries,
 )
+from canvas_mcp_server.utils.http_client import HTTPError
 from tests.fixtures.discussions import (
     DISCUSSION_DETAIL_REST,
     DISCUSSION_VIEW_REST,
     DISCUSSIONS_LIST_REST,
 )
-from tests.helpers.assertions import assert_http_error, assert_list_result, assert_tool_error
+from tests.helpers.assertions import (
+    assert_http_error,
+    assert_list_result,
+    assert_tool_error,
+)
 from tests.helpers.canvas_mock import CanvasAPIMock
-from canvas_mcp_server.utils.http_client import HTTPError
 
 
 def test_discussion_http_error_require_initial_post() -> None:
@@ -48,7 +52,9 @@ async def test_get_course_discussions_success(canvas_api: CanvasAPIMock) -> None
     result = await get_course_discussions("100001")
 
     assert result.result_count == 2
-    assert assert_list_result(result, DiscussionSummary, count=result.result_count) or True
+    assert (
+        assert_list_result(result, DiscussionSummary, count=result.result_count) or True
+    )
     assert result.results[0].discussion_id == 400001
     assert result.results[0].require_initial_post is True
     assert result.results[1].locked_for_user is True
@@ -120,9 +126,7 @@ async def test_get_discussion_entries_require_initial_post(
             url="https://canvas.example.edu/api/v1/courses/100001/discussion_topics/400001/view",
         )
 
-    canvas_api._rest_routes[
-        "v1/courses/100001/discussion_topics/400001/view"
-    ] = _raise
+    canvas_api._rest_routes["v1/courses/100001/discussion_topics/400001/view"] = _raise
 
     result = await get_discussion_entries("100001", "400001")
 

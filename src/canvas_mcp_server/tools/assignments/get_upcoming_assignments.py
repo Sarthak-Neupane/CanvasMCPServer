@@ -5,17 +5,24 @@ REST endpoint GET /api/v1/users/self/upcoming_events and keeps only the
 entries that carry an assignment.
 """
 
-from typing import Final, List, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import UpcomingAssignment, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import ListResult, UpcomingAssignment
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 
-UpcomingAssignmentsResponse: TypeAlias = Union[ListResult[UpcomingAssignment], Dict[str, Any]]
+UpcomingAssignmentsResponse: TypeAlias = Union[
+    ListResult[UpcomingAssignment], Dict[str, Any]
+]
 
 REST_ENDPOINT = "v1/users/self/upcoming_events"
 

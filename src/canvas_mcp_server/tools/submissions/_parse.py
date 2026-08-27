@@ -12,7 +12,9 @@ from ...models import (
 )
 
 
-def _attachments_from_submission(raw: Dict[str, Any]) -> List[SubmissionFeedbackAttachment]:
+def _attachments_from_submission(
+    raw: Dict[str, Any],
+) -> List[SubmissionFeedbackAttachment]:
     attachments_raw = raw.get("attachments")
     if not isinstance(attachments_raw, list):
         return []

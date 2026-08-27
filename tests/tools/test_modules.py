@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from canvas_mcp_server.models import ModuleItemDetail, ModuleItemSummary, ModuleSummary
 from canvas_mcp_server.tools.modules.get_course_modules import get_course_modules
-from canvas_mcp_server.tools.modules.get_module_item_details import get_module_item_details
+from canvas_mcp_server.tools.modules.get_module_item_details import (
+    get_module_item_details,
+)
 from canvas_mcp_server.tools.modules.get_module_items import get_module_items
 from tests.fixtures.modules import (
     MODULE_ITEM_DETAIL_REST,
@@ -43,7 +45,9 @@ async def test_get_module_items(canvas_api: CanvasAPIMock) -> None:
     result = await get_module_items("100001", "300001")
 
     assert result.result_count == 2
-    assert assert_list_result(result, ModuleItemSummary, count=result.result_count) or True
+    assert (
+        assert_list_result(result, ModuleItemSummary, count=result.result_count) or True
+    )
     assert result.results[0].type == "File"
     assert result.results[0].content_id == 500001
     assert result.results[1].type == "Page"

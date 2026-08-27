@@ -58,9 +58,7 @@ class EnrollmentGrade(BaseModel):
 class CourseGrades(BaseModel):
     """Grades for a course (one entry per visible student enrollment)."""
 
-    courseId: Annotated[
-        str, Field(description="The numeric Canvas ID of the course")
-    ]
+    courseId: Annotated[str, Field(description="The numeric Canvas ID of the course")]
     courseName: Annotated[
         Optional[str], Field(description="The name of the course")
     ] = None

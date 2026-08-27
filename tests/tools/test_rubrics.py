@@ -7,8 +7,8 @@ from canvas_mcp_server.tools.rubrics.get_assignment_rubric import (
     get_assignment_rubric,
 )
 from tests.fixtures.rubrics import (
-    ASSIGNMENT_WITHOUT_RUBRIC_REST,
     ASSIGNMENT_WITH_RUBRIC_REST,
+    ASSIGNMENT_WITHOUT_RUBRIC_REST,
 )
 from tests.helpers.assertions import assert_http_error, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock

@@ -3,15 +3,20 @@
 Uses GET /api/v1/courses/:course_id/quizzes.
 """
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import QuizSummary, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import ListResult, QuizSummary
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 from ._parse import sanitize_quiz_api_payload
 
 QuizzesResponse: TypeAlias = Union[ListResult[QuizSummary], Dict[str, Any]]
@@ -25,9 +30,7 @@ async def get_course_quizzes(
     search_term: Annotated[
         Optional[str],
         Field(
-            description=(
-                "Optional partial title filter, e.g. 'Midterm' or 'Quiz 1'."
-            ),
+            description=("Optional partial title filter, e.g. 'Midterm' or 'Quiz 1'."),
         ),
     ] = None,
     limit: ListLimitField = DEFAULT_LIST_LIMIT,
@@ -57,7 +60,9 @@ async def get_course_quizzes(
             for quiz in paginated.items
             if isinstance(quiz, dict)
         ]
-        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
+        return finalize_list(
+            items, resolve_list_limit(limit), truncated=paginated.truncated
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

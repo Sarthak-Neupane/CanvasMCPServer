@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from ...models import PlannerItem, PlannerSubmissionStatus
@@ -34,12 +35,19 @@ def _plannable_title(plannable: Dict[str, Any]) -> Optional[str]:
 def _plannable_datetime(
     plannable: Dict[str, Any],
     plannable_type: str,
-) -> Optional[str]:
+) -> Optional[datetime]:
     if plannable_type == "planner_note":
         value = plannable.get("todo_date")
     else:
         value = plannable.get("due_at") or plannable.get("todo_date")
-    return str(value) if value is not None else None
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+    text = str(value)
+    if text.endswith("Z"):
+        text = text.replace("Z", "+00:00")
+    return datetime.fromisoformat(text)
 
 
 def planner_item_from_api(raw: Dict[str, Any]) -> PlannerItem:

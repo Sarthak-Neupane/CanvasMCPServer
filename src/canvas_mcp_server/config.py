@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Dict
+
 from dotenv import load_dotenv
 
 # Load .env from the project root (two levels above this file), independent
@@ -14,7 +15,7 @@ load_dotenv(_PROJECT_ROOT_ENV if _PROJECT_ROOT_ENV.exists() else None)
 
 class Config:
     """Configuration class for Canvas MCP Server."""
-    
+
     # API Configuration
     # The base URL must end at /api (the GraphQL endpoint is {base}/graphql).
     # There is no default: the public canvas.instructure.com instance
@@ -33,19 +34,17 @@ class Config:
         os.getenv("CANVAS_MAX_DOWNLOAD_SIZE_MB", "100")
     )
     CANVAS_MAX_RETRIES: int = int(os.getenv("CANVAS_MAX_RETRIES", "3"))
-    CANVAS_RETRY_BASE_DELAY: float = float(
-        os.getenv("CANVAS_RETRY_BASE_DELAY", "1.0")
-    )
-    
+    CANVAS_RETRY_BASE_DELAY: float = float(os.getenv("CANVAS_RETRY_BASE_DELAY", "1.0"))
+
     # Debug Configuration
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    
+
     @classmethod
     def validate(cls) -> None:
         """
         Validate required configuration.
-        
+
         Raises:
             ValueError: If required configuration is missing.
         """
@@ -58,26 +57,26 @@ class Config:
                 "CANVAS_BASE_URL is required (e.g. https://your-school.instructure.com/api). "
                 "Please set it in your environment or .env file."
             )
-    
+
     @classmethod
     def get_api_headers(cls) -> Dict[str, str]:
         """
         Get headers for API requests.
-        
+
         Returns:
             Dict[str, str]: Dictionary of HTTP headers for API requests.
         """
         return {
             "Authorization": f"Bearer {cls.CANVAS_API_TOKEN}",
             "Content-Type": "application/json",
-            "User-Agent": "Canvas-MCP-Server/0.1.0"
+            "User-Agent": "Canvas-MCP-Server/0.1.0",
         }
 
     @classmethod
     def get_timeout(cls) -> float:
         """
         Get API timeout value.
-        
+
         Returns:
             float: Timeout value in seconds.
         """

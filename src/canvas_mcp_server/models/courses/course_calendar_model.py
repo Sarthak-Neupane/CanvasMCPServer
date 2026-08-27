@@ -8,6 +8,8 @@ class CalendarLink(BaseModel):
         str,
         Field(
             description="The URL of the calendar in ICS format",
-            examples=["https://canvas.instructure.com/feeds/calendars/course_abcdef.ics"],
+            examples=[
+                "https://canvas.instructure.com/feeds/calendars/course_abcdef.ics"
+            ],
         ),
     ]

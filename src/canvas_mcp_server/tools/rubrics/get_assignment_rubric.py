@@ -4,7 +4,7 @@ Uses GET /api/v1/courses/:course_id/assignments/:assignment_id
 with include[]=rubric.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field

@@ -3,15 +3,15 @@
 Uses GET /api/v1/courses/:course_id with include[]=syllabus_body.
 """
 
-from typing import Final, Dict, Any, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import CourseSyllabus
 from ...errors import as_tool_error
-from ...utils.content_metadata import attach_content_metadata
+from ...models import CourseSyllabus
 from ...utils import canvas_api_client
+from ...utils.content_metadata import attach_content_metadata
 
 CourseSyllabusResponse: TypeAlias = Union[CourseSyllabus, Dict[str, Any]]
 
@@ -20,9 +20,7 @@ async def get_course_syllabus(
     course_id: Annotated[
         str,
         Field(
-            description=(
-                "The course ID (numeric Canvas ID, e.g. '182314')."
-            ),
+            description=("The course ID (numeric Canvas ID, e.g. '182314')."),
         ),
     ],
 ) -> CourseSyllabusResponse:

@@ -194,7 +194,9 @@ class CanvasAPIMock:
     ) -> "CanvasAPIMock":
         """Queue a GraphQL success response (popped in call order)."""
         self._graphql_queue.append(
-            make_graphql_response(data, url=url or "https://canvas.example.edu/api/graphql")
+            make_graphql_response(
+                data, url=url or "https://canvas.example.edu/api/graphql"
+            )
         )
         return self
 

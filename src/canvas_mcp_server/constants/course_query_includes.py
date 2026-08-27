@@ -2,8 +2,10 @@
 
 from enum import Enum
 
+
 class CoursesInclude(str, Enum):
     """Additional information that can be included with Canvas courses API calls."""
+
     NEEDS_GRADING_COUNT = "needs_grading_count"
     SYLLABUS_BODY = "syllabus_body"
     PUBLIC_DESCRIPTION = "public_description"
@@ -26,7 +28,7 @@ class CoursesInclude(str, Enum):
     CONCLUDED = "concluded"
     POST_MANUALLY = "post_manually"
 
+
 class PerCourseInclude(str, Enum):
     ALL_COURSES = "all_courses"
     PERMISSIONS = "permissions"
-    

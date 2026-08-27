@@ -4,15 +4,20 @@ Uses GET /api/v1/courses/:course_id/modules/:module_id/items. Keeps the list
 lean (no content_details); use get_module_item_details for locks/due dates.
 """
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
+from typing import Annotated, Any, Dict, Final, List, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import ModuleItemSummary, ListResult
-from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
+from ...models import ListResult, ModuleItemSummary
 from ...utils import canvas_api_client
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    finalize_list,
+    resolve_list_limit,
+)
 
 ModuleItemsResponse: TypeAlias = Union[ListResult[ModuleItemSummary], Dict[str, Any]]
 
@@ -21,17 +26,13 @@ async def get_module_items(
     course_id: Annotated[
         str,
         Field(
-            description=(
-                "The course ID (numeric Canvas ID, e.g. '182571')."
-            ),
+            description=("The course ID (numeric Canvas ID, e.g. '182571')."),
         ),
     ],
     module_id: Annotated[
         str,
         Field(
-            description=(
-                "The module ID (numeric Canvas ID from get_course_modules)."
-            ),
+            description=("The module ID (numeric Canvas ID from get_course_modules)."),
         ),
     ],
     search_term: Annotated[
@@ -65,7 +66,9 @@ async def get_module_items(
             max_items=resolve_list_limit(limit),
         )
         items = [ModuleItemSummary.model_validate(item) for item in paginated.items]
-        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
+        return finalize_list(
+            items, resolve_list_limit(limit), truncated=paginated.truncated
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

@@ -50,13 +50,17 @@ async def test_get_assignments_for_course_pagination(canvas_api: CanvasAPIMock) 
     result = await get_assignments_for_course("100001")
 
     assert result.result_count == 2
-    assert assert_list_result(result, AssignmentSummary, count=result.result_count) or True
+    assert (
+        assert_list_result(result, AssignmentSummary, count=result.result_count) or True
+    )
     assert result.results[0].id == "200001"
     assert result.results[1].id == "200002"
     assert canvas_api.graphql.await_count == 2
 
 
-async def test_get_assignments_for_course_single_page(canvas_api: CanvasAPIMock) -> None:
+async def test_get_assignments_for_course_single_page(
+    canvas_api: CanvasAPIMock,
+) -> None:
     canvas_api.graphql_returns(ASSIGNMENTS_CONNECTION_GRAPHQL)
 
     result = await get_assignments_for_course("100001")

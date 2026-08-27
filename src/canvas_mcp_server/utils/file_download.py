@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 from ..config import config
-from ..models import DownloadBatchResult, DownloadFailure, DownloadedFile, FileDetail
+from ..models import DownloadBatchResult, DownloadedFile, DownloadFailure, FileDetail
 from .canvas_api import canvas_api_client
 from .http_client import HTTPError
 

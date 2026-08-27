@@ -23,28 +23,18 @@ _SKIP_CONTENT_TAGS = frozenset(
     }
 )
 _UNSAFE_LINK_SCHEMES = ("javascript:", "vbscript:", "data:")
-_FILE_PATH_RE = re.compile(
-    r"/courses/(?P<course_id>\d+)/files/(?P<file_id>\d+)"
-)
+_FILE_PATH_RE = re.compile(r"/courses/(?P<course_id>\d+)/files/(?P<file_id>\d+)")
 _FILE_SHORT_RE = re.compile(r"/files/(?P<file_id>\d+)")
-_PAGE_PATH_RE = re.compile(
-    r"/courses/(?P<course_id>\d+)/pages/(?P<page_slug>[^/?#]+)"
-)
+_PAGE_PATH_RE = re.compile(r"/courses/(?P<course_id>\d+)/pages/(?P<page_slug>[^/?#]+)")
 _ASSIGNMENT_PATH_RE = re.compile(
     r"/courses/(?P<course_id>\d+)/assignments/(?P<assignment_id>\d+)"
 )
 _DISCUSSION_PATH_RE = re.compile(
     r"/courses/(?P<course_id>\d+)/discussion_topics/(?P<discussion_id>\d+)"
 )
-_QUIZ_PATH_RE = re.compile(
-    r"/courses/(?P<course_id>\d+)/quizzes/(?P<quiz_id>\d+)"
-)
-_MODULE_PATH_RE = re.compile(
-    r"/courses/(?P<course_id>\d+)/modules/(?P<module_id>\d+)"
-)
-_FOLDER_PATH_RE = re.compile(
-    r"/courses/(?P<course_id>\d+)/folders/(?P<folder_id>\d+)"
-)
+_QUIZ_PATH_RE = re.compile(r"/courses/(?P<course_id>\d+)/quizzes/(?P<quiz_id>\d+)")
+_MODULE_PATH_RE = re.compile(r"/courses/(?P<course_id>\d+)/modules/(?P<module_id>\d+)")
+_FOLDER_PATH_RE = re.compile(r"/courses/(?P<course_id>\d+)/folders/(?P<folder_id>\d+)")
 _API_ENDPOINT_RE = re.compile(
     r'data-api-endpoint=["\'](?P<endpoint>[^"\']+)["\']',
     re.IGNORECASE,
@@ -166,7 +156,9 @@ def _resource(
     }
 
 
-def _classify_href(href: str, label: Optional[str] = None) -> Optional[CanvasResourceReference]:
+def _classify_href(
+    href: str, label: Optional[str] = None
+) -> Optional[CanvasResourceReference]:
     if _is_unsafe_href(href):
         return None
 

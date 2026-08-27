@@ -61,7 +61,7 @@ ASSIGNMENT_WITH_FILE_EMBED_REST = {
     "id": 200001,
     "name": "Homework 1",
     "description": (
-        '<p>Download the worksheet: '
+        "<p>Download the worksheet: "
         '<a href="/courses/100001/files/500001/download?wrap=1">worksheet.pdf</a></p>'
     ),
 }

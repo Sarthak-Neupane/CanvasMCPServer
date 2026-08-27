@@ -26,9 +26,7 @@ class QuizSummary(BaseModel):
     quiz_type: Annotated[
         Optional[str],
         Field(
-            description=(
-                "practice_quiz, assignment, graded_survey, or survey"
-            ),
+            description=("practice_quiz, assignment, graded_survey, or survey"),
         ),
     ] = None
     due_at: Annotated[
