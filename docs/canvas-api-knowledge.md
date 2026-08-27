@@ -292,6 +292,13 @@ top-level query for todo items or upcoming events — those are REST-only.
   returns `syllabus_body` (HTML). `syllabus_course_summary` may appear on the
   course object when Canvas exposes it (controls whether the assignment/calendar
   summary block is shown on the syllabus page).
+- **Files / folders**: `GET /api/v1/courses/:course_id/files` and
+  `.../folders`; `GET /api/v1/folders/:folder_id/files`;
+  `GET /api/v1/files/:id`. List endpoints support `search_term` and
+  `content_types[]` (MIME filter, e.g. `application/pdf` or `image`). Course
+  folders returns a **flat** list of all subfolders. File objects use
+  `content-type` (hyphenated) in JSON; responses include authenticated
+  `url` download links but tools return metadata only (no local download).
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)

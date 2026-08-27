@@ -11,6 +11,8 @@ from .courses.course_progress_model import CourseProgress
 from .courses.course_summary_model import CourseSummary
 from .courses.course_syllabus_model import CourseSyllabus
 from .courses.course_term_model import Term
+from .files.file_model import FileDetail, FileSummary
+from .files.folder_model import FolderSummary
 from .grades.course_grades_model import (
     CourseGrades,
     EnrollmentGrade,
@@ -48,6 +50,10 @@ __all__: Final[List[str]] = [
     "AssignmentSubmissions",
     "SubmissionStatus",
     "SubmissionUserRef",
+    # Files
+    "FileSummary",
+    "FileDetail",
+    "FolderSummary",
     # Grades
     "CourseGrades",
     "EnrollmentGrade",

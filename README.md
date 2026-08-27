@@ -20,6 +20,10 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_all_courses` | List courses for the current user (id, name, course code, term). Set `active_only=true` for dashboard courses only (stricter than `enrollment_state=active`). Optional `term` filter, e.g. `"Fall 2025"`. |
 | `get_course_by_id` | Get details for a single course by numeric ID or GraphQL global ID. |
 | `get_course_syllabus` | Get a course syllabus (`syllabus_body` HTML) for policy, grading, and exam rules. |
+| `get_course_files` | List course files with metadata (name, MIME type, size, download URL). Optional `search_term` and `content_type`. |
+| `get_course_folders` | List all folders in a course (flat list with full paths and file counts). |
+| `get_folder_files` | List files in a folder by `folder_id`. Optional `search_term` and `content_type`. |
+| `get_file_details` | Get metadata for one file by `file_id` (includes download URL; does not download). |
 | `get_upcoming_assignments` | List upcoming assignments across all courses with due dates and points. |
 | `get_assignments_for_course` | List all assignments in a course (name, due date, points, state, URL). |
 | `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
@@ -34,7 +38,7 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 Course, assignment, submission, grade, and announcement data comes from the
 [Canvas GraphQL API](https://developerdocs.instructure.com/services/canvas/basics/file.graphql);
 todo items, upcoming assignments, dashboard (`active_only`) course lists, modules,
-and syllabi use the REST API where GraphQL does not expose them (or where REST is
+syllabi, and files/folders use the REST API where GraphQL does not expose them (or where REST is
 the accurate source of truth).
 
 ## Requirements
