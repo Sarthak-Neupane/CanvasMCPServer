@@ -180,6 +180,10 @@ cython_debug/
 .cursor/*
 !.cursor/rules/
 
+# Local planning / roadmap (not for the public repo)
+docs/student-readonly-v1-roadmap.md
+.cursor/
+
 # MCP Server specific
 server.log
 *.pid

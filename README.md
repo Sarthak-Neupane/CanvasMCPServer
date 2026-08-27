@@ -151,14 +151,17 @@ Add to your Claude Desktop configuration:
 ## Development
 
 ```bash
-uv sync                          # install dependencies (incl. dev tooling via pip extras)
+uv sync --extra dev               # install runtime + dev deps (pytest, respx, …)
 uv run python scripts/run_server.py   # run the dev server
 
-uv run pytest                    # tests
+uv run pytest                    # run tests (mocked Canvas — no live token needed)
 uv run black src/ tests/         # formatting
 uv run isort src/ tests/
 uv run mypy src/ --strict        # type checking
 ```
+
+Tests use mocked Canvas responses (`tests/fixtures/`, `tests/helpers/canvas_mock.py`).
+Do not point CI at a real `CANVAS_API_TOKEN`.
 
 ## Project Structure
 
