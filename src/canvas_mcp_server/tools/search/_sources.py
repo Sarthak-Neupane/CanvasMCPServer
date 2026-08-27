@@ -6,18 +6,27 @@ import asyncio
 from typing import Any, Dict, List, Optional
 
 from ...utils import canvas_api_client, extract_graphql_data
+from ...utils.graphql_pagination import paginate_graphql_connection
 from ...utils.html import html_to_text
 from ._types import SEARCH_CONTENT_TYPES, SearchDocument
 
 ASSIGNMENTS_SEARCH_GRAPHQL = """
-query ($courseId: ID!, $searchTerm: String!, $first: Int!) {
+query ($courseId: ID!, $searchTerm: String!, $first: Int!, $after: String) {
   course(id: $courseId) {
-    assignmentsConnection(first: $first, filter: {searchTerm: $searchTerm}) {
+    assignmentsConnection(
+      first: $first
+      after: $after
+      filter: {searchTerm: $searchTerm}
+    ) {
       nodes {
         _id
         name
         htmlUrl
         dueAt
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
   }
@@ -25,10 +34,11 @@ query ($courseId: ID!, $searchTerm: String!, $first: Int!) {
 """
 
 ANNOUNCEMENTS_SEARCH_GRAPHQL = """
-query ($courseId: ID!, $searchTerm: String!, $first: Int!) {
+query ($courseId: ID!, $searchTerm: String!, $first: Int!, $after: String) {
   course(id: $courseId) {
     discussionsConnection(
       first: $first
+      after: $after
       filter: {isAnnouncement: true, searchTerm: $searchTerm}
     ) {
       nodes {
@@ -36,6 +46,10 @@ query ($courseId: ID!, $searchTerm: String!, $first: Int!) {
         title
         message
         postedAt
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
   }
@@ -110,20 +124,27 @@ async def _collect_pages(course_id: str, query: str) -> List[SearchDocument]:
 
 
 async def _collect_assignments(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.post_graphql_query(
-        query=ASSIGNMENTS_SEARCH_GRAPHQL,
-        variables={
-            "courseId": course_id,
-            "searchTerm": query,
-            "first": PER_SOURCE_LIMIT,
-        },
-    )
-    data = extract_graphql_data(response)
-    course = data.get("course")
-    if not isinstance(course, dict):
-        return []
+    async def fetch_connection(after: str | None) -> Dict[str, Any]:
+        response = await canvas_api_client.post_graphql_query(
+            query=ASSIGNMENTS_SEARCH_GRAPHQL,
+            variables={
+                "courseId": course_id,
+                "searchTerm": query,
+                "first": PER_SOURCE_LIMIT,
+                "after": after,
+            },
+        )
+        data = extract_graphql_data(response)
+        course = data.get("course")
+        if not isinstance(course, dict):
+            return {"nodes": []}
+        return course.get("assignmentsConnection") or {"nodes": []}
 
-    nodes = (course.get("assignmentsConnection") or {}).get("nodes") or []
+    nodes = await paginate_graphql_connection(
+        fetch_connection,
+        max_pages=5,
+        max_items=PER_SOURCE_LIMIT,
+    )
     documents: List[SearchDocument] = []
     for node in nodes:
         if not isinstance(node, dict):
@@ -173,20 +194,27 @@ async def _collect_modules(course_id: str, query: str) -> List[SearchDocument]:
 
 
 async def _collect_announcements(course_id: str, query: str) -> List[SearchDocument]:
-    response = await canvas_api_client.post_graphql_query(
-        query=ANNOUNCEMENTS_SEARCH_GRAPHQL,
-        variables={
-            "courseId": course_id,
-            "searchTerm": query,
-            "first": PER_SOURCE_LIMIT,
-        },
-    )
-    data = extract_graphql_data(response)
-    course = data.get("course")
-    if not isinstance(course, dict):
-        return []
+    async def fetch_connection(after: str | None) -> Dict[str, Any]:
+        response = await canvas_api_client.post_graphql_query(
+            query=ANNOUNCEMENTS_SEARCH_GRAPHQL,
+            variables={
+                "courseId": course_id,
+                "searchTerm": query,
+                "first": PER_SOURCE_LIMIT,
+                "after": after,
+            },
+        )
+        data = extract_graphql_data(response)
+        course = data.get("course")
+        if not isinstance(course, dict):
+            return {"nodes": []}
+        return course.get("discussionsConnection") or {"nodes": []}
 
-    nodes = (course.get("discussionsConnection") or {}).get("nodes") or []
+    nodes = await paginate_graphql_connection(
+        fetch_connection,
+        max_pages=5,
+        max_items=PER_SOURCE_LIMIT,
+    )
     documents: List[SearchDocument] = []
     for node in nodes:
         if not isinstance(node, dict):

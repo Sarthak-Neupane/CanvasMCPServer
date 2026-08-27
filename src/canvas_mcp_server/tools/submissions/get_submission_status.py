@@ -7,6 +7,7 @@ from pydantic import Field
 
 from ...models import AssignmentSubmissions, SubmissionStatus
 from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...utils.graphql_pagination import paginate_graphql_connection
 from ._user import current_user_id
 
 SubmissionStatusResponse: TypeAlias = Union[AssignmentSubmissions, Dict[str, Any]]
@@ -14,13 +15,13 @@ SubmissionStatusResponse: TypeAlias = Union[AssignmentSubmissions, Dict[str, Any
 # Canvas GraphQL does not reliably auto-scope submissionsConnection for
 # students — filter to the current user in this tool (student MCP server).
 GRAPHQL_QUERY = """
-query ($assignmentId: ID!, $first: Int!) {
+query ($assignmentId: ID!, $first: Int!, $after: String) {
   assignment(id: $assignmentId) {
     _id
     name
     dueAt
     pointsPossible
-    submissionsConnection(first: $first) {
+    submissionsConnection(first: $first, after: $after) {
       nodes {
         _id
         state
@@ -40,6 +41,10 @@ query ($assignmentId: ID!, $first: Int!) {
           _id
           name
         }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
   }
@@ -72,26 +77,39 @@ async def get_submission_status(
     """
     try:
         self_id = await current_user_id()
-        response = await canvas_api_client.post_graphql_query(
-            query=GRAPHQL_QUERY,
-            variables={"assignmentId": assignment_id, "first": PAGE_SIZE},
-        )
-        data = extract_graphql_data(response)
-        assignment = data.get("assignment")
-        if assignment is None:
-            raise Exception(f"No assignment found for id: {assignment_id}")
+        assignment_meta: Dict[str, Any] | None = None
 
-        connection = assignment.get("submissionsConnection") or {"nodes": []}
+        async def fetch_connection(after: str | None) -> Dict[str, Any]:
+            nonlocal assignment_meta
+            response = await canvas_api_client.post_graphql_query(
+                query=GRAPHQL_QUERY,
+                variables={
+                    "assignmentId": assignment_id,
+                    "first": PAGE_SIZE,
+                    "after": after,
+                },
+            )
+            data = extract_graphql_data(response)
+            assignment = data.get("assignment")
+            if assignment is None:
+                raise Exception(f"No assignment found for id: {assignment_id}")
+            if assignment_meta is None:
+                assignment_meta = assignment
+            return assignment.get("submissionsConnection") or {"nodes": []}
+
+        nodes = await paginate_graphql_connection(fetch_connection, max_pages=5)
         submissions = [
             SubmissionStatus.model_validate(node)
-            for node in connection["nodes"]
+            for node in nodes
             if str((node.get("user") or {}).get("_id")) == self_id
         ]
+        if assignment_meta is None:
+            raise Exception(f"No assignment found for id: {assignment_id}")
         return AssignmentSubmissions(
-            assignmentId=assignment["_id"],
-            assignmentName=assignment.get("name"),
-            dueAt=assignment.get("dueAt"),
-            pointsPossible=assignment.get("pointsPossible"),
+            assignmentId=assignment_meta["_id"],
+            assignmentName=assignment_meta.get("name"),
+            dueAt=assignment_meta.get("dueAt"),
+            pointsPossible=assignment_meta.get("pointsPossible"),
             submissions=submissions,
         )
 

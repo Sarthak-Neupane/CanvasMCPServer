@@ -1,19 +1,28 @@
 """Tool for listing announcements in a Canvas course via the GraphQL API."""
 
-from typing import Final, List, Dict, Any, Union, TypeAlias, Annotated
+from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import Announcement
 from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...utils.graphql_pagination import (
+    DEFAULT_GRAPHQL_MAX_PAGES,
+    DEFAULT_GRAPHQL_PAGE_SIZE,
+    paginate_graphql_connection,
+)
 
 AnnouncementsResponse: TypeAlias = Union[List[Announcement], Dict[str, Any]]
 
 GRAPHQL_QUERY = """
-query ($courseId: ID!, $first: Int!) {
+query ($courseId: ID!, $first: Int!, $after: String) {
   course(id: $courseId) {
-    discussionsConnection(first: $first, filter: {isAnnouncement: true}) {
+    discussionsConnection(
+      first: $first
+      after: $after
+      filter: {isAnnouncement: true}
+    ) {
       nodes {
         _id
         title
@@ -24,12 +33,14 @@ query ($courseId: ID!, $first: Int!) {
           name
         }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
     }
   }
 }
 """
-
-PAGE_SIZE = 50
 
 
 async def get_announcements(
@@ -51,17 +62,26 @@ async def get_announcements(
     "status_code" keys.
     """
     try:
-        response = await canvas_api_client.post_graphql_query(
-            query=GRAPHQL_QUERY,
-            variables={"courseId": course_id, "first": PAGE_SIZE},
-        )
-        data = extract_graphql_data(response)
-        course = data.get("course")
-        if course is None:
-            raise Exception(f"No course found for id: {course_id}")
+        async def fetch_connection(after: Optional[str]) -> Dict[str, Any]:
+            response = await canvas_api_client.post_graphql_query(
+                query=GRAPHQL_QUERY,
+                variables={
+                    "courseId": course_id,
+                    "first": DEFAULT_GRAPHQL_PAGE_SIZE,
+                    "after": after,
+                },
+            )
+            data = extract_graphql_data(response)
+            course = data.get("course")
+            if course is None:
+                raise Exception(f"No course found for id: {course_id}")
+            return course.get("discussionsConnection") or {"nodes": []}
 
-        connection = course.get("discussionsConnection") or {"nodes": []}
-        return [Announcement.model_validate(node) for node in connection["nodes"]]
+        nodes = await paginate_graphql_connection(
+            fetch_connection,
+            max_pages=DEFAULT_GRAPHQL_MAX_PAGES,
+        )
+        return [Announcement.model_validate(node) for node in nodes]
 
     except HTTPError as e:
         return {

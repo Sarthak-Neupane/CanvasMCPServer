@@ -124,7 +124,8 @@ COURSE_GRADES_ALL_STUDENTS_GRAPHQL = {
                         "finalGrade": None,
                     },
                 },
-            ]
+            ],
+            "pageInfo": {"endCursor": "cursor1", "hasNextPage": False},
         },
     }
 }

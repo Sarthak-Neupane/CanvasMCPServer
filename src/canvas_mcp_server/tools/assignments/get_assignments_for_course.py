@@ -7,10 +7,14 @@ from pydantic import Field
 
 from ...models import AssignmentSummary
 from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...utils.graphql_pagination import (
+    DEFAULT_GRAPHQL_MAX_PAGES,
+    DEFAULT_GRAPHQL_PAGE_SIZE,
+    paginate_graphql_connection,
+)
 
 AssignmentsResponse: TypeAlias = Union[List[AssignmentSummary], Dict[str, Any]]
 
-# Relay cursor pagination; pages are fetched until exhausted (capped below).
 GRAPHQL_QUERY = """
 query ($courseId: ID!, $first: Int!, $after: String) {
   course(id: $courseId) {
@@ -32,9 +36,6 @@ query ($courseId: ID!, $first: Int!, $after: String) {
 }
 """
 
-PAGE_SIZE = 50
-MAX_PAGES = 10
-
 
 async def get_assignments_for_course(
     course_id: Annotated[
@@ -55,28 +56,26 @@ async def get_assignments_for_course(
     "status_code" keys.
     """
     try:
-        assignments: List[AssignmentSummary] = []
-        after: Optional[str] = None
-        for _ in range(MAX_PAGES):
+        async def fetch_connection(after: Optional[str]) -> Dict[str, Any]:
             response = await canvas_api_client.post_graphql_query(
                 query=GRAPHQL_QUERY,
-                variables={"courseId": course_id, "first": PAGE_SIZE, "after": after},
+                variables={
+                    "courseId": course_id,
+                    "first": DEFAULT_GRAPHQL_PAGE_SIZE,
+                    "after": after,
+                },
             )
             data = extract_graphql_data(response)
             course = data.get("course")
             if course is None:
                 raise Exception(f"No course found for id: {course_id}")
+            return course["assignmentsConnection"]
 
-            connection = course["assignmentsConnection"]
-            assignments.extend(
-                AssignmentSummary.model_validate(node)
-                for node in connection["nodes"]
-            )
-            page_info = connection["pageInfo"]
-            if not page_info["hasNextPage"]:
-                break
-            after = page_info["endCursor"]
-        return assignments
+        nodes = await paginate_graphql_connection(
+            fetch_connection,
+            max_pages=DEFAULT_GRAPHQL_MAX_PAGES,
+        )
+        return [AssignmentSummary.model_validate(node) for node in nodes]
 
     except HTTPError as e:
         return {

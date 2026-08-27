@@ -10,7 +10,11 @@ from canvas_mcp_server.models import (
 from canvas_mcp_server.tools.announcements.get_announcements import get_announcements
 from canvas_mcp_server.tools.grades.get_course_grades import get_course_grades
 from canvas_mcp_server.tools.submissions.get_submission_status import get_submission_status
-from tests.fixtures.announcements import ANNOUNCEMENTS_GRAPHQL
+from tests.fixtures.announcements import (
+    ANNOUNCEMENTS_GRAPHQL,
+    ANNOUNCEMENTS_PAGE_1,
+    ANNOUNCEMENTS_PAGE_2,
+)
 from tests.fixtures.grades import (
     COURSE_GRADES_ALL_STUDENTS_GRAPHQL,
     COURSE_GRADES_GRAPHQL,
@@ -130,3 +134,15 @@ async def test_get_announcements(canvas_api: CanvasAPIMock) -> None:
     assert result[0].message == "<p>The midterm is now on Friday.</p>"
     assert result[0].author is not None
     assert result[0].author.name == "Dr. Instructor"
+
+
+async def test_get_announcements_pagination(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.graphql_returns(ANNOUNCEMENTS_PAGE_1)
+    canvas_api.graphql_returns(ANNOUNCEMENTS_PAGE_2)
+
+    result = await get_announcements("100001")
+
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert {item.id for item in result} == {"110001", "110002"}
+    assert canvas_api.graphql.await_count == 2

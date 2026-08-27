@@ -166,6 +166,12 @@ Source: [Throttling](https://developerdocs.instructure.com/services/canvas/basic
   All REST list tools use this helper (files, folders, modules, pages,
   discussions, quizzes, planner, calendar, todos, upcoming events, search
   collectors, and dashboard course hydration).
+- **GraphQL connections**: `paginate_graphql_connection` in
+  `utils/graphql_pagination.py` follows Relay `pageInfo.endCursor` /
+  `hasNextPage` (default 50 per page, max 10 pages). Used by assignments,
+  announcements, teacher grade rosters, submission status, and search
+  GraphQL collectors. Single-object queries (`course`, `assignment` detail)
+  and scoped student grade lookups do not paginate.
 - **Not paginated** (single-object endpoints): file/assignment/page/discussion
   detail, syllabus body, submission feedback, rubric include, dashboard cards
   (bounded), discussion topic view.

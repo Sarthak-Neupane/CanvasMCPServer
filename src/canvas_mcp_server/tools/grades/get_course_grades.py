@@ -7,6 +7,11 @@ from pydantic import Field
 
 from ...models import CourseGrades, EnrollmentGrade
 from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ...utils.graphql_pagination import (
+    DEFAULT_GRAPHQL_MAX_PAGES,
+    DEFAULT_GRAPHQL_PAGE_SIZE,
+    paginate_graphql_connection,
+)
 
 CourseGradesResponse: TypeAlias = Union[CourseGrades, Dict[str, Any]]
 
@@ -45,11 +50,15 @@ query ($courseId: ID!, $userIds: [ID!]) {
 """
 
 ALL_STUDENT_GRADES_QUERY = """
-query ($courseId: ID!) {
+query ($courseId: ID!, $first: Int!, $after: String) {
   course(id: $courseId) {
     _id
     name
-    enrollmentsConnection(filter: {types: [StudentEnrollment]}) {
+    enrollmentsConnection(
+      first: $first
+      after: $after
+      filter: {types: [StudentEnrollment]}
+    ) {
       nodes {
         _id
         type
@@ -64,10 +73,36 @@ query ($courseId: ID!) {
           finalGrade
         }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
     }
   }
 }
 """
+
+
+async def _fetch_all_student_enrollments(course_id: str) -> List[Dict[str, Any]]:
+    async def fetch_connection(after: str | None) -> Dict[str, Any]:
+        response = await canvas_api_client.post_graphql_query(
+            query=ALL_STUDENT_GRADES_QUERY,
+            variables={
+                "courseId": course_id,
+                "first": DEFAULT_GRAPHQL_PAGE_SIZE,
+                "after": after,
+            },
+        )
+        data = extract_graphql_data(response)
+        course = data.get("course")
+        if course is None:
+            raise Exception(f"No course found for id: {course_id}")
+        return course.get("enrollmentsConnection") or {"nodes": []}
+
+    return await paginate_graphql_connection(
+        fetch_connection,
+        max_pages=DEFAULT_GRAPHQL_MAX_PAGES,
+    )
 
 
 async def _current_user_id() -> str:
@@ -127,13 +162,7 @@ async def get_course_grades(
         )
 
         if can_view_all:
-            all_response = await canvas_api_client.post_graphql_query(
-                query=ALL_STUDENT_GRADES_QUERY,
-                variables={"courseId": course_id},
-            )
-            all_data = extract_graphql_data(all_response)
-            course = all_data.get("course") or course
-            nodes = _enrollment_nodes(course)
+            nodes = await _fetch_all_student_enrollments(course_id)
         else:
             nodes = _enrollment_nodes(course)
             # Defense in depth: never return another user's enrollment to a
