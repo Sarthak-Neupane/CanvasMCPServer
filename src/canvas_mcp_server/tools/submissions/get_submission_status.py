@@ -7,11 +7,12 @@ from pydantic import Field
 
 from ...models import AssignmentSubmissions, SubmissionStatus
 from ...utils import canvas_api_client, extract_graphql_data, HTTPError
+from ._user import current_user_id
 
 SubmissionStatusResponse: TypeAlias = Union[AssignmentSubmissions, Dict[str, Any]]
 
-# Visibility is enforced server-side: students receive only their own
-# submission, teachers receive submissions for all students.
+# Canvas GraphQL does not reliably auto-scope submissionsConnection for
+# students — filter to the current user in this tool (student MCP server).
 GRAPHQL_QUERY = """
 query ($assignmentId: ID!, $first: Int!) {
   assignment(id: $assignmentId) {
@@ -62,12 +63,15 @@ async def get_submission_status(
     """
     Get submission status for a Canvas assignment.
 
-    For students this returns their own submission (status, score, grade,
-    late/missing flags, attempt, timestamps). For teachers it returns
-    submissions for all students. Returns an error object with "error",
-    "message", and optionally "status_code" keys on failure.
+    Returns the current user's submission only (status, score, grade,
+    late/missing flags, attempt, timestamps). Classmate submissions are
+    never returned, even if Canvas expands the connection.
+
+    Returns an error object with "error", "message", and optionally
+    "status_code" keys on failure.
     """
     try:
+        self_id = await current_user_id()
         response = await canvas_api_client.post_graphql_query(
             query=GRAPHQL_QUERY,
             variables={"assignmentId": assignment_id, "first": PAGE_SIZE},
@@ -79,7 +83,9 @@ async def get_submission_status(
 
         connection = assignment.get("submissionsConnection") or {"nodes": []}
         submissions = [
-            SubmissionStatus.model_validate(node) for node in connection["nodes"]
+            SubmissionStatus.model_validate(node)
+            for node in connection["nodes"]
+            if str((node.get("user") or {}).get("_id")) == self_id
         ]
         return AssignmentSubmissions(
             assignmentId=assignment["_id"],
@@ -107,7 +113,7 @@ get_submission_status_tool: Final[Tool] = Tool.from_function(
     description=(
         "Get submission status for a Canvas assignment: whether it was "
         "submitted, when, the score/grade if graded, and late/missing/excused "
-        "flags. Students see their own submission; teachers see all students."
+        "flags. Returns only the current user's submission."
     ),
     fn=get_submission_status,
 )

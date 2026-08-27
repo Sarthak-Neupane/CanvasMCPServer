@@ -43,7 +43,8 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_course_quizzes` | List quizzes in a course (metadata only: due dates, time limits, lock state). Optional `search_term`. |
 | `get_quiz` | Get one quiz by id (instructions and settings; no questions). |
 | `get_assignment_rubric` | Get an assignment's rubric criteria and rating levels (no student scores). |
-| `get_submission_status` | Check submission status for an assignment: submitted/late/missing, score and grade. Students see their own; teachers see all. |
+| `get_submission_status` | Check your submission status for an assignment: submitted/late/missing, score and grade. Self only. |
+| `get_submission_feedback` | Get instructor feedback on your submission: comments, rubric scores, attachments. Self only. |
 | `get_course_grades` | Get current and final scores/grades for a course. Students see only their own enrollment (no classmate roster); teachers with grade permission see all students. |
 | `get_announcements` | List a course's announcements (title, message, post date, author). |
 | `get_course_modules` | List modules in a course (structure only: name, position, unlock date, item count, student progression). Optional `search_term`. |

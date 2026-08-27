@@ -42,6 +42,12 @@ from .submissions.submission_status_model import (
     SubmissionStatus,
     SubmissionUserRef,
 )
+from .submissions.submission_feedback_model import (
+    RubricAssessmentEntry,
+    SubmissionFeedback,
+    SubmissionFeedbackAttachment,
+    SubmissionFeedbackComment,
+)
 from .modules.module_item_model import (
     CompletionRequirement,
     ContentDetails,
@@ -87,6 +93,10 @@ __all__: Final[List[str]] = [
     "AssignmentSubmissions",
     "SubmissionStatus",
     "SubmissionUserRef",
+    "SubmissionFeedback",
+    "SubmissionFeedbackComment",
+    "SubmissionFeedbackAttachment",
+    "RubricAssessmentEntry",
     # Files
     "FileSummary",
     "FileDetail",

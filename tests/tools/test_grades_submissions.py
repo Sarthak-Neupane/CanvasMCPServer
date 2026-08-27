@@ -18,11 +18,15 @@ from tests.fixtures.grades import (
     COURSE_GRADES_TEACHER_SCOPED_GRAPHQL,
     USERS_SELF_REST,
 )
-from tests.fixtures.submissions import SUBMISSION_STATUS_GRAPHQL
+from tests.fixtures.submissions import (
+    SUBMISSION_STATUS_GRAPHQL,
+    SUBMISSION_STATUS_ROSTER_LEAK_GRAPHQL,
+)
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
 async def test_get_submission_status_student_scope(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_returns("v1/users/self", USERS_SELF_REST)
     canvas_api.graphql_returns(SUBMISSION_STATUS_GRAPHQL)
 
     result = await get_submission_status("200001")
@@ -41,6 +45,20 @@ async def test_get_submission_status_student_scope(canvas_api: CanvasAPIMock) ->
     assert call is not None
     assert call.kwargs["variables"]["assignmentId"] == "200001"
     assert call.kwargs["variables"]["first"] == 100
+
+
+async def test_get_submission_status_filters_roster_leak(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    canvas_api.rest_returns("v1/users/self", USERS_SELF_REST)
+    canvas_api.graphql_returns(SUBMISSION_STATUS_ROSTER_LEAK_GRAPHQL)
+
+    result = await get_submission_status("200001")
+
+    assert isinstance(result, AssignmentSubmissions)
+    assert len(result.submissions) == 1
+    assert result.submissions[0].user is not None
+    assert result.submissions[0].user.id == "700001"
 
 
 async def test_get_course_grades_student_single_enrollment(

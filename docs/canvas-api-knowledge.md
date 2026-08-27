@@ -293,6 +293,12 @@ top-level query for todo items or upcoming events — those are REST-only.
   `rubric_settings.points_possible`, and `use_rubric_for_grading`. Does not
   include student assessment scores — those appear on submissions with
   `include[]=rubric_assessment` (see P3.4 submission feedback).
+- **Submission feedback**: `GET
+  /api/v1/courses/:course_id/assignments/:assignment_id/submissions/self` with
+  `include[]=submission_comments` and `include[]=rubric_assessment` returns the
+  current user's comments, rubric scores, and attachments. `get_submission_status`
+  filters GraphQL `submissionsConnection` to the authenticated user so classmate
+  submissions are never returned.
 
 ### REST-only endpoints needed by tools
 
