@@ -319,6 +319,11 @@ top-level query for todo items or upcoming events — those are REST-only.
     course-relative Canvas paths and `data-api-endpoint` instructure embeds.
     Used by upcoming Pages and `get_assignment_resources` tools; file downloads
     reuse this via `extract_file_ids_from_html`.
+- **Assignment resources**: `get_assignment_resources(course_id, assignment_id)`
+  parses assignment description HTML via the shared html utils (anchor hrefs and
+  `data-api-endpoint` instructure embeds). Returns deduped metadata for files,
+  pages, external URLs, and other course objects — use before
+  `download_assignment_files` when you need discovery separate from download.
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)

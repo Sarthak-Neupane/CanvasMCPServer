@@ -6,6 +6,7 @@ from mcp.server.fastmcp.tools import Tool
 from .announcements import get_announcements_tool
 from .assignments import (
     get_assignment_details_tool,
+    get_assignment_resources_tool,
     get_assignments_for_course_tool,
     get_upcoming_assignments_tool,
 )
@@ -53,6 +54,7 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_upcoming_assignments_tool,
     get_assignments_for_course_tool,
     get_assignment_details_tool,
+    get_assignment_resources_tool,
     get_todo_items_tool,
     get_submission_status_tool,
     get_course_grades_tool,
@@ -80,6 +82,7 @@ __all__: Final[List[str]] = [
     "get_upcoming_assignments_tool",
     "get_assignments_for_course_tool",
     "get_assignment_details_tool",
+    "get_assignment_resources_tool",
     "get_todo_items_tool",
     "get_submission_status_tool",
     "get_course_grades_tool",

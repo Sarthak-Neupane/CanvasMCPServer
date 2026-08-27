@@ -33,6 +33,7 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_upcoming_assignments` | List upcoming assignments across all courses with due dates and points. |
 | `get_assignments_for_course` | List all assignments in a course (name, due date, points, state, URL). |
 | `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
+| `get_assignment_resources` | Discover files, pages, and external URLs linked in an assignment description (metadata only). |
 | `get_todo_items` | List the user's todo items: assignments to submit (students) or grade (teachers). |
 | `get_submission_status` | Check submission status for an assignment: submitted/late/missing, score and grade. Students see their own; teachers see all. |
 | `get_course_grades` | Get current and final scores/grades for a course. Students see only their own enrollment (no classmate roster); teachers with grade permission see all students. |

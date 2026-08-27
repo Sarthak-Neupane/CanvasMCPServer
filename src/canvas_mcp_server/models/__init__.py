@@ -3,6 +3,11 @@ from typing import Final, List
 
 from .announcements.announcement_model import Announcement, AnnouncementAuthorRef
 from .assignments.assignment_detail_model import AssignmentCourseRef, AssignmentDetail
+from .assignments.assignment_resource_model import (
+    AssignmentResource,
+    AssignmentResources,
+    AssignmentResourceType,
+)
 from .assignments.assignment_summary_model import AssignmentSummary
 from .assignments.upcoming_assignment_model import UpcomingAssignment
 from .courses.course_calendar_model import CalendarLink
@@ -52,6 +57,9 @@ __all__: Final[List[str]] = [
     "AssignmentSummary",
     "AssignmentDetail",
     "AssignmentCourseRef",
+    "AssignmentResource",
+    "AssignmentResources",
+    "AssignmentResourceType",
     "UpcomingAssignment",
     # Submissions
     "AssignmentSubmissions",

@@ -91,3 +91,19 @@ UPCOMING_EVENTS_REST = [
         },
     },
 ]
+
+ASSIGNMENT_REST_WITH_EMBEDS = {
+    "id": 200001,
+    "name": "Homework 1",
+    "description": """
+<div>
+  <p>Read the <a href="/courses/100001/pages/week-1">Week 1 page</a>.</p>
+  <p>Download:
+    <a href="/courses/100001/files/500001/download?wrap=1"
+       data-api-endpoint="/api/v1/courses/100001/files/500001"
+       class="instructure_file_link">worksheet.pdf</a>
+  </p>
+  <p>Also see <a href="https://example.edu/resource">external resource</a>.</p>
+</div>
+""",
+}
