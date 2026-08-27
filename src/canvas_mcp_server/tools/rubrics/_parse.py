@@ -34,4 +34,5 @@ def rubric_from_assignment(assignment: Dict[str, Any]) -> Optional[Rubric]:
         points_possible=points_possible,
         use_rubric_for_grading=assignment.get("use_rubric_for_grading"),
         criteria=criteria,
+        result_count=len(criteria),
     )

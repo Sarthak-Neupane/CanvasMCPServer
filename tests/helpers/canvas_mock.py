@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 
 from canvas_mcp_server.utils.canvas_api import canvas_api_client
 from canvas_mcp_server.utils.http_client import HTTPError, HTTPResponse
+from canvas_mcp_server.utils.pagination_types import PaginatedResult
 
 RestRoute = Union[HTTPResponse, Callable[..., Any]]
 
@@ -136,17 +137,21 @@ class CanvasAPIMock:
         max_items: Optional[int] = None,
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
-    ) -> List[Any]:
+    ) -> PaginatedResult[Any]:
         page_limit = max_pages or 10
         items: List[Any] = []
+        truncated = False
 
         if endpoint in self._paginated_pages:
             for response in self._paginated_pages[endpoint][:page_limit]:
                 if isinstance(response.data, list):
                     items.extend(response.data)
                 if max_items is not None and len(items) >= max_items:
-                    return items[:max_items]
-            return items
+                    return PaginatedResult(
+                        items=items[:max_items],
+                        truncated=True,
+                    )
+            return PaginatedResult(items=items, truncated=truncated)
 
         response = await self.rest(
             endpoint,
@@ -161,9 +166,9 @@ class CanvasAPIMock:
                 url=endpoint,
             )
         items = list(response.data)
-        if max_items is not None:
-            return items[:max_items]
-        return items
+        if max_items is not None and len(items) > max_items:
+            return PaginatedResult(items=items[:max_items], truncated=True)
+        return PaginatedResult(items=items, truncated=truncated)
 
     def rest_returns(
         self,

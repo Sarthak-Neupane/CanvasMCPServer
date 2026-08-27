@@ -8,12 +8,13 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import PlannerItem
+from ...models import PlannerItem, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._parse import planner_item_from_api
 
-PlannerItemsResponse: TypeAlias = Union[List[PlannerItem], Dict[str, Any]]
+PlannerItemsResponse: TypeAlias = Union[ListResult[PlannerItem], Dict[str, Any]]
 
 REST_ENDPOINT = "v1/planner/items"
 
@@ -64,12 +65,13 @@ async def get_planner_items(
         if course_id:
             params["context_codes[]"] = f"course_{course_id}"
 
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT,
             params=params,
         )
 
-        return [planner_item_from_api(item) for item in data if isinstance(item, dict)]
+        items = [planner_item_from_api(item) for item in paginated.items if isinstance(item, dict)]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

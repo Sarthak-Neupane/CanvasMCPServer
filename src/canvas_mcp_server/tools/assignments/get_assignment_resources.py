@@ -52,6 +52,7 @@ async def get_assignment_resources(
             assignment_id=str(data.get("id", assignment_id)),
             assignment_name=data.get("name"),
             resources=resources,
+            result_count=len(resources),
         )
 
     except Exception as e:

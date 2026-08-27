@@ -5,11 +5,12 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import CourseSummary
+from ...models import CourseSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client, extract_graphql_data
 
-CoursesResponse: TypeAlias = Union[List[CourseSummary], Dict[str, Any]]
+CoursesResponse: TypeAlias = Union[ListResult[CourseSummary], Dict[str, Any]]
 
 GRAPHQL_QUERY = """
 query {
@@ -101,12 +102,13 @@ async def get_all_courses(
     or an error object with "error", "message", and optionally "status_code" keys.
     """
     try:
+        truncated = False
         if active_only:
             # Dashboard cards are the contract for "current" courses. Hydrate
             # with REST /v1/courses (+ term) so summaries keep the same shape
             # as the non-active path.
             dashboard_ids = await _dashboard_course_ids()
-            course_list = await canvas_api_client.get_rest_paginated(
+            paginated = await canvas_api_client.get_rest_paginated(
                 "v1/courses",
                 params={
                     "enrollment_state": "active",
@@ -114,9 +116,10 @@ async def get_all_courses(
                     "per_page": 100,
                 },
             )
+            truncated = paginated.truncated
             courses = [
                 _rest_course_to_summary(course)
-                for course in course_list
+                for course in paginated.items
                 if isinstance(course, dict)
                 and str(course.get("id")) in dashboard_ids
                 and not course.get("access_restricted_by_date")
@@ -133,7 +136,7 @@ async def get_all_courses(
                 for course in courses
                 if course.term and course.term.name == term
             ]
-        return courses
+        return list_result(courses, truncated=truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_graphql")

@@ -16,7 +16,7 @@ from tests.fixtures.courses import (
     SYLLABUS_EMPTY_REST,
     SYLLABUS_HTML_REST,
 )
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -25,13 +25,12 @@ async def test_get_all_courses_graphql_success(canvas_api: CanvasAPIMock) -> Non
 
     result = await get_all_courses()
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(course, CourseSummary) for course in result)
-    assert result[0].name == "Intro to Testing"
-    assert result[0].courseCode == "TEST101"
-    assert result[0].term is not None
-    assert result[0].term.name == "Fall 2025"
+    assert result.result_count == 2
+    assert all(isinstance(course, CourseSummary) for course in result.results)
+    assert result.results[0].name == "Intro to Testing"
+    assert result.results[0].courseCode == "TEST101"
+    assert result.results[0].term is not None
+    assert result.results[0].term.name == "Fall 2025"
 
 
 async def test_get_all_courses_term_filter(canvas_api: CanvasAPIMock) -> None:
@@ -39,11 +38,10 @@ async def test_get_all_courses_term_filter(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_all_courses(term="Fall 2025")
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0].name == "Intro to Testing"
-    assert result[0].term is not None
-    assert result[0].term.name == "Fall 2025"
+    assert result.result_count == 1
+    assert result.results[0].name == "Intro to Testing"
+    assert result.results[0].term is not None
+    assert result.results[0].term.name == "Fall 2025"
 
 
 async def test_get_all_courses_active_only_dashboard_intersection(
@@ -54,12 +52,11 @@ async def test_get_all_courses_active_only_dashboard_intersection(
 
     result = await get_all_courses(active_only=True)
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0].id == "100001"
-    assert result[0].name == "Intro to Testing"
-    assert result[0].term is not None
-    assert result[0].term.name == "Fall 2025"
+    assert result.result_count == 1
+    assert result.results[0].id == "100001"
+    assert result.results[0].name == "Intro to Testing"
+    assert result.results[0].term is not None
+    assert result.results[0].term.name == "Fall 2025"
 
 
 async def test_get_course_by_id_success(canvas_api: CanvasAPIMock) -> None:

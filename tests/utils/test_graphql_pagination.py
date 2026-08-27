@@ -30,7 +30,7 @@ async def test_paginate_graphql_connection_follows_cursors() -> None:
 
     nodes = await paginate_graphql_connection(fetch_connection, max_pages=5)
 
-    assert [node["_id"] for node in nodes] == ["1", "2"]
+    assert [node["_id"] for node in nodes.items] == ["1", "2"]
     assert calls == [None, "cursor1"]
 
 
@@ -48,4 +48,5 @@ async def test_paginate_graphql_connection_respects_max_items() -> None:
         max_items=2,
     )
 
-    assert len(nodes) == 2
+    assert len(nodes.items) == 2
+    assert nodes.truncated is True

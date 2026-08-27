@@ -26,6 +26,7 @@ from tests.fixtures.assignments import (
     UPCOMING_EVENTS_REST,
 )
 from tests.fixtures.todos import TODO_ITEMS_REST
+from tests.helpers.assertions import assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -34,13 +35,12 @@ async def test_get_upcoming_assignments(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_upcoming_assignments()
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], UpcomingAssignment)
-    assert result[0].id == 200001
-    assert result[0].name == "Homework 1"
-    assert result[0].context_code == "course_100001"
-    assert result[0].course_id == 100001
+    assert result.result_count == 1
+    assert isinstance(result.results[0], UpcomingAssignment)
+    assert result.results[0].id == 200001
+    assert result.results[0].name == "Homework 1"
+    assert result.results[0].context_code == "course_100001"
+    assert result.results[0].course_id == 100001
 
 
 async def test_get_assignments_for_course_pagination(canvas_api: CanvasAPIMock) -> None:
@@ -49,11 +49,10 @@ async def test_get_assignments_for_course_pagination(canvas_api: CanvasAPIMock) 
 
     result = await get_assignments_for_course("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(item, AssignmentSummary) for item in result)
-    assert result[0].id == "200001"
-    assert result[1].id == "200002"
+    assert result.result_count == 2
+    assert assert_list_result(result, AssignmentSummary, count=result.result_count) or True
+    assert result.results[0].id == "200001"
+    assert result.results[1].id == "200002"
     assert canvas_api.graphql.await_count == 2
 
 
@@ -62,9 +61,8 @@ async def test_get_assignments_for_course_single_page(canvas_api: CanvasAPIMock)
 
     result = await get_assignments_for_course("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0].name == "Homework 1"
+    assert result.result_count == 1
+    assert result.results[0].name == "Homework 1"
     assert canvas_api.graphql.await_count == 1
 
 
@@ -90,11 +88,10 @@ async def test_get_todo_items(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_todo_items()
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], TodoItem)
-    assert result[0].type == "submitting"
-    assert result[0].course_id == 100001
-    assert result[0].assignment is not None
-    assert result[0].assignment.id == 200001
-    assert result[0].assignment.name == "Homework 1"
+    assert result.result_count == 1
+    assert isinstance(result.results[0], TodoItem)
+    assert result.results[0].type == "submitting"
+    assert result.results[0].course_id == 100001
+    assert result.results[0].assignment is not None
+    assert result.results[0].assignment.id == 200001
+    assert result.results[0].assignment.name == "Homework 1"

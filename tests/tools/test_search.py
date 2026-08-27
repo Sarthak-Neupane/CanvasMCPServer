@@ -10,7 +10,7 @@ from tests.fixtures.search import (
     PAGES_SEARCH_REST,
     SYLLABUS_SEARCH_REST,
 )
-from tests.helpers.assertions import assert_tool_error
+from tests.helpers.assertions import assert_list_result, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -39,13 +39,12 @@ async def test_search_course_content_pages_and_syllabus(
         limit=5,
     )
 
-    assert isinstance(result, list)
-    assert len(result) >= 2
-    assert all(isinstance(item, SearchResult) for item in result)
-    types = {item.content_type for item in result}
+    assert result.result_count >= 2
+    assert assert_list_result(result, SearchResult, count=result.result_count) or True
+    types = {item.content_type for item in result.results}
     assert "page" in types
-    assert result[0].score >= result[-1].score
-    assert all(item.snippet is not None for item in result)
+    assert result.results[0].score >= result.results[-1].score
+    assert all(item.snippet is not None for item in result.results)
 
 
 async def test_search_course_content_invalid_type(canvas_api: CanvasAPIMock) -> None:

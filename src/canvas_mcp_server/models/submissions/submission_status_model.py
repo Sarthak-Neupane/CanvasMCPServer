@@ -106,3 +106,7 @@ class AssignmentSubmissions(BaseModel):
             ),
         ),
     ]
+    result_count: Annotated[
+        int,
+        Field(description="Number of submissions returned"),
+    ] = 0

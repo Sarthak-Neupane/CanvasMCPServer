@@ -6,13 +6,14 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...errors import as_tool_error
-from ...models import SearchResult
+from ...models import ListResult, SearchResult
+from ...utils.list_results import list_result
 from ._rank import rank_documents
 from ._snippet import make_snippet
 from ._sources import collect_search_documents
 from ._types import SEARCH_CONTENT_TYPES
 
-SearchResultsResponse: TypeAlias = Union[List[SearchResult], Dict[str, Any]]
+SearchResultsResponse: TypeAlias = Union[ListResult[SearchResult], Dict[str, Any]]
 
 
 async def search_course_content(
@@ -57,6 +58,7 @@ async def search_course_content(
     try:
         documents = await collect_search_documents(course_id, query, content_types)
         ranked = rank_documents(query, documents)
+        truncated = len(ranked) > limit
 
         results: List[SearchResult] = []
         for document, score in ranked[:limit]:
@@ -72,7 +74,7 @@ async def search_course_content(
                     url=document.url,
                 )
             )
-        return results
+        return list_result(results, truncated=truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

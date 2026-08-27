@@ -83,6 +83,10 @@ class DiscussionEntries(BaseModel):
             description="Users who posted in the discussion",
         ),
     ]
+    result_count: Annotated[
+        int,
+        Field(description="Number of top-level entries in entries"),
+    ] = 0
 
 
 DiscussionEntry.model_rebuild()

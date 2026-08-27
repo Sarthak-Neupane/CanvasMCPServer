@@ -9,11 +9,12 @@ from typing import Final, List, Dict, Any, Union, TypeAlias
 
 from mcp.server.fastmcp.tools import Tool
 
-from ...models import UpcomingAssignment
+from ...models import UpcomingAssignment, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
-UpcomingAssignmentsResponse: TypeAlias = Union[List[UpcomingAssignment], Dict[str, Any]]
+UpcomingAssignmentsResponse: TypeAlias = Union[ListResult[UpcomingAssignment], Dict[str, Any]]
 
 REST_ENDPOINT = "v1/users/self/upcoming_events"
 
@@ -27,12 +28,12 @@ async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
     keys on failure.
     """
     try:
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT, params={"per_page": 100}
         )
 
         assignments: List[UpcomingAssignment] = []
-        for event in data:
+        for event in paginated.items:
             assignment = event.get("assignment")
             if not assignment:
                 continue
@@ -41,7 +42,7 @@ async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
                     {**assignment, "context_code": event.get("context_code")}
                 )
             )
-        return assignments
+        return list_result(assignments, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

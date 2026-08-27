@@ -234,4 +234,7 @@ async def download_many_files(
         destination_root=str(course_dir),
         downloaded=downloaded,
         failed=failed,
+        downloaded_count=len(downloaded),
+        failed_count=len(failed),
+        result_count=len(downloaded) + len(failed),
     )

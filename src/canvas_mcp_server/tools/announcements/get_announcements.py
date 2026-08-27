@@ -5,7 +5,8 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import Announcement
+from ...models import Announcement, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import (
@@ -14,7 +15,7 @@ from ...utils.graphql_pagination import (
     paginate_graphql_connection,
 )
 
-AnnouncementsResponse: TypeAlias = Union[List[Announcement], Dict[str, Any]]
+AnnouncementsResponse: TypeAlias = Union[ListResult[Announcement], Dict[str, Any]]
 
 GRAPHQL_QUERY = """
 query ($courseId: ID!, $first: Int!, $after: String) {
@@ -78,11 +79,12 @@ async def get_announcements(
                 raise Exception(f"No course found for id: {course_id}")
             return course.get("discussionsConnection") or {"nodes": []}
 
-        nodes = await paginate_graphql_connection(
+        paginated = await paginate_graphql_connection(
             fetch_connection,
             max_pages=DEFAULT_GRAPHQL_MAX_PAGES,
         )
-        return [Announcement.model_validate(node) for node in nodes]
+        items = [Announcement.model_validate(node) for node in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_graphql")

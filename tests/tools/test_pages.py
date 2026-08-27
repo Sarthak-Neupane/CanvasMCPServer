@@ -12,7 +12,7 @@ from canvas_mcp_server.tools.pages._params import (
 from canvas_mcp_server.tools.pages.get_course_pages import get_course_pages
 from canvas_mcp_server.tools.pages.get_page import get_page
 from tests.fixtures.pages import PAGE_DETAIL_REST, PAGES_LIST_REST
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -34,11 +34,10 @@ async def test_get_course_pages_success(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_course_pages("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(page, PageSummary) for page in result)
-    assert result[0].url == "week-1-overview"
-    assert result[1].front_page is True
+    assert result.result_count == 2
+    assert all(isinstance(page, PageSummary) for page in result.results)
+    assert result.results[0].url == "week-1-overview"
+    assert result.results[1].front_page is True
 
 
 async def test_get_course_pages_search_term(canvas_api: CanvasAPIMock) -> None:

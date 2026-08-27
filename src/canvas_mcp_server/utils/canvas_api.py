@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional
 from ..config import config
 from .http_client import BaseHTTPClient, HTTPResponse, HTTPError
 from .rest_pagination import DEFAULT_MAX_PAGES, DEFAULT_PER_PAGE, parse_link_header
+from .pagination_types import PaginatedResult
 from .retry_policy import (
     compute_retry_delay,
     should_retry_status,
@@ -160,7 +161,7 @@ class CanvasAPIClient(BaseHTTPClient):
         max_items: Optional[int] = None,
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
-    ) -> List[Any]:
+    ) -> PaginatedResult[Any]:
         """
         Fetch all pages of a Canvas REST list endpoint.
 
@@ -177,7 +178,7 @@ class CanvasAPIClient(BaseHTTPClient):
             timeout: Request timeout override in seconds.
 
         Returns:
-            List[Any]: Aggregated JSON array items across pages.
+            PaginatedResult[Any]: Aggregated items and whether more pages exist.
 
         Raises:
             HTTPError: If any page request fails.
@@ -190,6 +191,7 @@ class CanvasAPIClient(BaseHTTPClient):
 
         items: List[Any] = []
         next_url: Optional[str] = None
+        truncated = False
 
         for page_index in range(page_limit):
             if next_url:
@@ -213,7 +215,22 @@ class CanvasAPIClient(BaseHTTPClient):
 
             items.extend(response.data)
             if max_items is not None and len(items) >= max_items:
-                return items[:max_items]
+                if len(items) > max_items:
+                    truncated = True
+                sliced = items[:max_items]
+                has_more = bool(
+                    next(
+                        (
+                            value
+                            for key, value in response.headers.items()
+                            if key.lower() == "link"
+                        ),
+                        "",
+                    )
+                )
+                if has_more and "rel=\"next\"" in has_more:
+                    truncated = True
+                return PaginatedResult(items=sliced, truncated=truncated)
 
             link_header = next(
                 (
@@ -229,9 +246,10 @@ class CanvasAPIClient(BaseHTTPClient):
                 break
 
             if page_index + 1 >= page_limit:
+                truncated = True
                 break
 
-        return items
+        return PaginatedResult(items=items, truncated=truncated)
 
     async def download_file_to_path(
         self,

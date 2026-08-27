@@ -8,7 +8,8 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import PageSummary
+from ...models import PageSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
@@ -43,11 +44,12 @@ async def get_course_pages(
         if search_term:
             params["search_term"] = search_term
 
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/pages",
             params=params,
         )
-        return [PageSummary.model_validate(page) for page in data]
+        items = [PageSummary.model_validate(page) for page in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

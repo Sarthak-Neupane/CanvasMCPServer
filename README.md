@@ -152,6 +152,15 @@ Common codes: `canvas_unauthorized` (401), `canvas_forbidden` (403),
 
 Full catalog and agent guidance: [docs/errors.md](docs/errors.md).
 
+## Output conventions
+
+List tools return a `ListResult` object (`results`, `result_count`, `truncated`)
+instead of a bare array. GraphQL-backed models use **camelCase**; REST-backed
+models use **snake_case**. Timestamps serialize as ISO-8601; nullable fields
+serialize as JSON `null`.
+
+Details: [docs/output-conventions.md](docs/output-conventions.md).
+
 ## Usage
 
 ### Standalone

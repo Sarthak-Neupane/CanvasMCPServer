@@ -5,7 +5,7 @@ from canvas_mcp_server.tools.quizzes._parse import sanitize_quiz_api_payload
 from canvas_mcp_server.tools.quizzes.get_course_quizzes import get_course_quizzes
 from canvas_mcp_server.tools.quizzes.get_quiz import get_quiz
 from tests.fixtures.quizzes import QUIZZES_LIST_REST, QUIZ_DETAIL_REST
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -24,14 +24,13 @@ async def test_get_course_quizzes_success(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_course_quizzes("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(quiz, QuizSummary) for quiz in result)
-    assert result[0].quiz_id == 500001
-    assert result[0].requires_access_code is True
-    assert result[0].has_ip_filter is False
-    assert result[1].locked_for_user is True
-    assert result[1].has_ip_filter is True
+    assert result.result_count == 2
+    assert all(isinstance(quiz, QuizSummary) for quiz in result.results)
+    assert result.results[0].quiz_id == 500001
+    assert result.results[0].requires_access_code is True
+    assert result.results[0].has_ip_filter is False
+    assert result.results[1].locked_for_user is True
+    assert result.results[1].has_ip_filter is True
 
 
 async def test_get_course_quizzes_search_term(canvas_api: CanvasAPIMock) -> None:

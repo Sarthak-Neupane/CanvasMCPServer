@@ -129,9 +129,9 @@ async def test_get_rest_paginated_follows_link_header(
         max_pages=2,
     )
 
-    assert len(items) == 2
-    assert items[0]["id"] == 1
-    assert items[1]["id"] == 2
+    assert len(items.items) == 2
+    assert items.items[0]["id"] == 1
+    assert items.items[1]["id"] == 2
 
 
 @respx.mock

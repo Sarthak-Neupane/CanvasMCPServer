@@ -163,7 +163,8 @@ async def get_course_grades(
         )
 
         if can_view_all:
-            nodes = await _fetch_all_student_enrollments(course_id)
+            paginated = await _fetch_all_student_enrollments(course_id)
+            nodes = paginated.items
         else:
             nodes = _enrollment_nodes(course)
             # Defense in depth: never return another user's enrollment to a
@@ -180,6 +181,7 @@ async def get_course_grades(
             courseId=course["_id"],
             courseName=course.get("name"),
             enrollments=enrollments,
+            result_count=len(enrollments),
         )
 
     except Exception as e:

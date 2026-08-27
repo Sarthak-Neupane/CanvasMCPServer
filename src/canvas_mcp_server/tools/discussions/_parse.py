@@ -73,4 +73,5 @@ def discussion_entries_from_view(raw: Dict[str, Any]) -> DiscussionEntries:
         entries=entries,
         unread_entry_ids=unread_ids,
         participants=participants,
+        result_count=len(entries),
     )

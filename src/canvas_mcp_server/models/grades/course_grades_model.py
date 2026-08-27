@@ -75,3 +75,7 @@ class CourseGrades(BaseModel):
             ),
         ),
     ]
+    result_count: Annotated[
+        int,
+        Field(description="Number of enrollments returned"),
+    ] = 0

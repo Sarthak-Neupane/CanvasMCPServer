@@ -8,12 +8,13 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import CalendarEvent
+from ...models import CalendarEvent, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._parse import calendar_event_from_api
 
-CalendarEventsResponse: TypeAlias = Union[List[CalendarEvent], Dict[str, Any]]
+CalendarEventsResponse: TypeAlias = Union[ListResult[CalendarEvent], Dict[str, Any]]
 
 REST_ENDPOINT = "v1/calendar_events"
 DASHBOARD_ENDPOINT = "v1/dashboard/dashboard_cards"
@@ -44,7 +45,7 @@ async def _fetch_calendar_events(
     start_date: Optional[str],
     end_date: Optional[str],
     context_codes: List[str],
-) -> List[CalendarEvent]:
+) -> tuple[List[CalendarEvent], bool]:
     params: Dict[str, Any] = {
         "type": event_type,
         "per_page": 100,
@@ -57,16 +58,17 @@ async def _fetch_calendar_events(
     if context_codes:
         params["context_codes[]"] = context_codes
 
-    data = await canvas_api_client.get_rest_paginated(
+    paginated = await canvas_api_client.get_rest_paginated(
         endpoint=REST_ENDPOINT,
         params=params,
     )
 
-    return [
+    events = [
         calendar_event_from_api(item, event_type=event_type)
-        for item in data
+        for item in paginated.items
         if isinstance(item, dict)
     ]
+    return events, paginated.truncated
 
 
 async def get_calendar_events(
@@ -114,15 +116,16 @@ async def get_calendar_events(
             context_codes = await _dashboard_context_codes()
 
         events: List[CalendarEvent] = []
+        truncated = False
         for event_type in EVENT_TYPES:
-            events.extend(
-                await _fetch_calendar_events(
-                    event_type=event_type,
-                    start_date=start_date,
-                    end_date=end_date,
-                    context_codes=context_codes,
-                )
+            batch, batch_truncated = await _fetch_calendar_events(
+                event_type=event_type,
+                start_date=start_date,
+                end_date=end_date,
+                context_codes=context_codes,
             )
+            events.extend(batch)
+            truncated = truncated or batch_truncated
 
         events.sort(
             key=lambda item: (
@@ -130,7 +133,7 @@ async def get_calendar_events(
                 item.start_at or item.all_day_date or "",
             )
         )
-        return events
+        return list_result(events, truncated=truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

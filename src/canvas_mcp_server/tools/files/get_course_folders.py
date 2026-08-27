@@ -8,11 +8,12 @@ from typing import Final, List, Dict, Any, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import FolderSummary
+from ...models import FolderSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
-CourseFoldersResponse: TypeAlias = Union[List[FolderSummary], Dict[str, Any]]
+CourseFoldersResponse: TypeAlias = Union[ListResult[FolderSummary], Dict[str, Any]]
 
 
 async def get_course_folders(
@@ -32,11 +33,12 @@ async def get_course_folders(
     "status_code" keys on failure.
     """
     try:
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/folders",
             params={"per_page": 100},
         )
-        return [FolderSummary.model_validate(item) for item in data]
+        items = [FolderSummary.model_validate(item) for item in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

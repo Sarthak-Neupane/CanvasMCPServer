@@ -8,11 +8,12 @@ from typing import Final, List, Dict, Any, Union, TypeAlias
 
 from mcp.server.fastmcp.tools import Tool
 
-from ...models import TodoItem
+from ...models import TodoItem, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
-TodoItemsResponse: TypeAlias = Union[List[TodoItem], Dict[str, Any]]
+TodoItemsResponse: TypeAlias = Union[ListResult[TodoItem], Dict[str, Any]]
 
 REST_ENDPOINT = "v1/users/self/todo"
 
@@ -26,10 +27,11 @@ async def get_todo_items() -> TodoItemsResponse:
     "error", "message", and optionally "status_code" keys on failure.
     """
     try:
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT, params={"per_page": 100}
         )
-        return [TodoItem.model_validate(item) for item in data]
+        items = [TodoItem.model_validate(item) for item in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

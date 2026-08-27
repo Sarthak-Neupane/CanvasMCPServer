@@ -163,13 +163,11 @@ Source: [Throttling](https://developerdocs.instructure.com/services/canvas/basic
   URLs as opaque; parse the header name case-insensitively. `rel="last"` may be
   omitted when the total count is expensive. If you authenticate via
   `access_token` query param, it is stripped from the returned links.
-- **Server helper**: `canvas_api_client.get_rest_paginated(endpoint, params,
-  max_pages=10, max_items=None)` aggregates list pages via `parse_link_header`
-  in `utils/rest_pagination.py`. First request uses the relative endpoint;
-  subsequent pages call `get_rest_absolute` with the opaque `next` URL.
-  All REST list tools use this helper (files, folders, modules, pages,
-  discussions, quizzes, planner, calendar, todos, upcoming events, search
-  collectors, and dashboard course hydration).
+- **Server helper**: `canvas_api_client.get_rest_paginated(...)` returns a
+  `PaginatedResult` (`items`, `truncated`) and aggregates list pages via
+  `parse_link_header` in `utils/rest_pagination.py`. MCP list tools wrap
+  `items` in `ListResult` (`results`, `result_count`, `truncated`) — see
+  [output-conventions.md](output-conventions.md).
 - **GraphQL connections**: `paginate_graphql_connection` in
   `utils/graphql_pagination.py` follows Relay `pageInfo.endCursor` /
   `hasNextPage` (default 50 per page, max 10 pages). Used by assignments,

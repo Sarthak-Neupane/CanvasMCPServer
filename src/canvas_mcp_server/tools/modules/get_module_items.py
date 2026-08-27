@@ -9,11 +9,12 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import ModuleItemSummary
+from ...models import ModuleItemSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
-ModuleItemsResponse: TypeAlias = Union[List[ModuleItemSummary], Dict[str, Any]]
+ModuleItemsResponse: TypeAlias = Union[ListResult[ModuleItemSummary], Dict[str, Any]]
 
 
 async def get_module_items(
@@ -57,11 +58,12 @@ async def get_module_items(
         if search_term:
             params["search_term"] = search_term
 
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/modules/{module_id}/items",
             params=params,
         )
-        return [ModuleItemSummary.model_validate(item) for item in data]
+        items = [ModuleItemSummary.model_validate(item) for item in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

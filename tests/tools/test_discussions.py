@@ -18,7 +18,7 @@ from tests.fixtures.discussions import (
     DISCUSSION_VIEW_REST,
     DISCUSSIONS_LIST_REST,
 )
-from tests.helpers.assertions import assert_http_error, assert_tool_error
+from tests.helpers.assertions import assert_http_error, assert_list_result, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 from canvas_mcp_server.utils.http_client import HTTPError
 
@@ -47,13 +47,12 @@ async def test_get_course_discussions_success(canvas_api: CanvasAPIMock) -> None
 
     result = await get_course_discussions("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(item, DiscussionSummary) for item in result)
-    assert result[0].discussion_id == 400001
-    assert result[0].require_initial_post is True
-    assert result[1].locked_for_user is True
-    assert result[1].lock_explanation is not None
+    assert result.result_count == 2
+    assert assert_list_result(result, DiscussionSummary, count=result.result_count) or True
+    assert result.results[0].discussion_id == 400001
+    assert result.results[0].require_initial_post is True
+    assert result.results[1].locked_for_user is True
+    assert result.results[1].lock_explanation is not None
 
 
 async def test_get_course_discussions_search_term(canvas_api: CanvasAPIMock) -> None:

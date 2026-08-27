@@ -8,12 +8,13 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import FileSummary
+from ...models import FileSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._params import build_file_list_params
 
-FolderFilesResponse: TypeAlias = Union[List[FileSummary], Dict[str, Any]]
+FolderFilesResponse: TypeAlias = Union[ListResult[FileSummary], Dict[str, Any]]
 
 
 async def get_folder_files(
@@ -50,11 +51,12 @@ async def get_folder_files(
     "status_code" keys on failure.
     """
     try:
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/folders/{folder_id}/files",
             params=build_file_list_params(search_term, content_type),
         )
-        return [FileSummary.model_validate(item) for item in data]
+        items = [FileSummary.model_validate(item) for item in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

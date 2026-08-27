@@ -10,7 +10,7 @@ from canvas_mcp_server.tools.files.get_course_folders import get_course_folders
 from canvas_mcp_server.tools.files.get_file_details import get_file_details
 from canvas_mcp_server.tools.files.get_folder_files import get_folder_files
 from tests.fixtures.files import FILE_DETAIL_REST, FILE_LIST_REST, FOLDER_LIST_REST
-from tests.helpers.assertions import assert_http_error
+from tests.helpers.assertions import assert_http_error, assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -19,12 +19,11 @@ async def test_get_course_files_success(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_course_files("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], FileSummary)
-    assert result[0].id == 500001
-    assert result[0].display_name == "syllabus.pdf"
-    assert result[0].content_type == "application/pdf"
+    assert result.result_count == 1
+    assert isinstance(result.results[0], FileSummary)
+    assert result.results[0].id == 500001
+    assert result.results[0].display_name == "syllabus.pdf"
+    assert result.results[0].content_type == "application/pdf"
 
 
 async def test_get_course_files_search_term(canvas_api: CanvasAPIMock) -> None:
@@ -53,9 +52,8 @@ async def test_get_course_files_follows_link_pages(canvas_api: CanvasAPIMock) ->
 
     result = await get_course_files("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert {item.id for item in result} == {500001, 500002}
+    assert result.result_count == 2
+    assert {item.id for item in result.results} == {500001, 500002}
 
 
 async def test_get_course_folders_success(canvas_api: CanvasAPIMock) -> None:
@@ -63,12 +61,11 @@ async def test_get_course_folders_success(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_course_folders("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], FolderSummary)
-    assert result[0].id == 600001
-    assert result[0].name == "course files"
-    assert result[0].files_count == 1
+    assert result.result_count == 1
+    assert isinstance(result.results[0], FolderSummary)
+    assert result.results[0].id == 600001
+    assert result.results[0].name == "course files"
+    assert result.results[0].files_count == 1
 
 
 async def test_get_folder_files_success(canvas_api: CanvasAPIMock) -> None:
@@ -76,9 +73,8 @@ async def test_get_folder_files_success(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_folder_files("600001")
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert result[0].display_name == "syllabus.pdf"
+    assert result.result_count == 1
+    assert result.results[0].display_name == "syllabus.pdf"
 
 
 async def test_get_file_details_content_type_alias(canvas_api: CanvasAPIMock) -> None:

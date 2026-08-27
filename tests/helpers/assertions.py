@@ -2,9 +2,30 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Sequence, Type, TypeVar, Union
 
 from canvas_mcp_server.errors import ErrorCode
+from canvas_mcp_server.models import ListResult
+
+T = TypeVar("T")
+
+
+def assert_list_result(
+    result: Any,
+    model_type: Type[T],
+    *,
+    count: Optional[int] = None,
+    truncated: Optional[bool] = None,
+) -> ListResult[T]:
+    """Assert that a tool returned a normalized list wrapper."""
+    assert isinstance(result, ListResult)
+    assert all(isinstance(item, model_type) for item in result.results)
+    assert result.result_count == len(result.results)
+    if count is not None:
+        assert result.result_count == count
+    if truncated is not None:
+        assert result.truncated is truncated
+    return result
 
 
 def assert_tool_error(

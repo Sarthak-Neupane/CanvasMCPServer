@@ -96,14 +96,14 @@ async def _collect_syllabus(course_id: str) -> List[SearchDocument]:
 
 
 async def _collect_pages(course_id: str, query: str) -> List[SearchDocument]:
-    data = await canvas_api_client.get_rest_paginated(
+    paginated = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/pages",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
         max_items=PER_SOURCE_LIMIT,
     )
 
     documents: List[SearchDocument] = []
-    for page in data:
+    for page in paginated.items:
         if not isinstance(page, dict):
             continue
         slug = page.get("url")
@@ -140,13 +140,13 @@ async def _collect_assignments(course_id: str, query: str) -> List[SearchDocumen
             return {"nodes": []}
         return course.get("assignmentsConnection") or {"nodes": []}
 
-    nodes = await paginate_graphql_connection(
+    paginated = await paginate_graphql_connection(
         fetch_connection,
         max_pages=5,
         max_items=PER_SOURCE_LIMIT,
     )
     documents: List[SearchDocument] = []
-    for node in nodes:
+    for node in paginated.items:
         if not isinstance(node, dict):
             continue
         assignment_id = node.get("_id")
@@ -166,14 +166,14 @@ async def _collect_assignments(course_id: str, query: str) -> List[SearchDocumen
 
 
 async def _collect_modules(course_id: str, query: str) -> List[SearchDocument]:
-    data = await canvas_api_client.get_rest_paginated(
+    paginated = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/modules",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
         max_items=PER_SOURCE_LIMIT,
     )
 
     documents: List[SearchDocument] = []
-    for module in data:
+    for module in paginated.items:
         if not isinstance(module, dict):
             continue
         module_id = module.get("id")
@@ -210,13 +210,13 @@ async def _collect_announcements(course_id: str, query: str) -> List[SearchDocum
             return {"nodes": []}
         return course.get("discussionsConnection") or {"nodes": []}
 
-    nodes = await paginate_graphql_connection(
+    paginated = await paginate_graphql_connection(
         fetch_connection,
         max_pages=5,
         max_items=PER_SOURCE_LIMIT,
     )
     documents: List[SearchDocument] = []
-    for node in nodes:
+    for node in paginated.items:
         if not isinstance(node, dict):
             continue
         announcement_id = node.get("_id")
@@ -240,14 +240,14 @@ async def _collect_announcements(course_id: str, query: str) -> List[SearchDocum
 
 
 async def _collect_files(course_id: str, query: str) -> List[SearchDocument]:
-    data = await canvas_api_client.get_rest_paginated(
+    paginated = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/files",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
         max_items=PER_SOURCE_LIMIT,
     )
 
     documents: List[SearchDocument] = []
-    for file_obj in data:
+    for file_obj in paginated.items:
         if not isinstance(file_obj, dict):
             continue
         file_id = file_obj.get("id")
@@ -271,14 +271,14 @@ async def _collect_files(course_id: str, query: str) -> List[SearchDocument]:
 
 
 async def _collect_quizzes(course_id: str, query: str) -> List[SearchDocument]:
-    data = await canvas_api_client.get_rest_paginated(
+    paginated = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/quizzes",
         params={"per_page": PER_SOURCE_LIMIT, "search_term": query},
         max_items=PER_SOURCE_LIMIT,
     )
 
     documents: List[SearchDocument] = []
-    for quiz in data:
+    for quiz in paginated.items:
         if not isinstance(quiz, dict):
             continue
         quiz_id = quiz.get("id")
@@ -300,7 +300,7 @@ async def _collect_quizzes(course_id: str, query: str) -> List[SearchDocument]:
 
 
 async def _collect_discussions(course_id: str, query: str) -> List[SearchDocument]:
-    data = await canvas_api_client.get_rest_paginated(
+    paginated = await canvas_api_client.get_rest_paginated(
         endpoint=f"v1/courses/{course_id}/discussion_topics",
         params={
             "per_page": PER_SOURCE_LIMIT,
@@ -311,7 +311,7 @@ async def _collect_discussions(course_id: str, query: str) -> List[SearchDocumen
     )
 
     documents: List[SearchDocument] = []
-    for topic in data:
+    for topic in paginated.items:
         if not isinstance(topic, dict):
             continue
         discussion_id = topic.get("id")

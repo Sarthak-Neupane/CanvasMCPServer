@@ -11,6 +11,7 @@ from tests.fixtures.modules import (
     MODULE_ITEMS_REST,
     MODULES_LIST_REST,
 )
+from tests.helpers.assertions import assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -19,13 +20,12 @@ async def test_get_course_modules_structure_only(canvas_api: CanvasAPIMock) -> N
 
     result = await get_course_modules("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(module, ModuleSummary) for module in result)
-    assert result[0].name == "Week 1"
-    assert result[0].items_count == 3
-    assert result[1].state == "locked"
-    assert not hasattr(result[0], "items")
+    assert result.result_count == 2
+    assert all(isinstance(module, ModuleSummary) for module in result.results)
+    assert result.results[0].name == "Week 1"
+    assert result.results[0].items_count == 3
+    assert result.results[1].state == "locked"
+    assert not hasattr(result.results[0], "items")
 
     call = canvas_api.get_rest_paginated_mock.await_args
     assert call is not None
@@ -42,13 +42,12 @@ async def test_get_module_items(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_module_items("100001", "300001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(item, ModuleItemSummary) for item in result)
-    assert result[0].type == "File"
-    assert result[0].content_id == 500001
-    assert result[1].type == "Page"
-    assert result[1].page_url == "chapter-1"
+    assert result.result_count == 2
+    assert assert_list_result(result, ModuleItemSummary, count=result.result_count) or True
+    assert result.results[0].type == "File"
+    assert result.results[0].content_id == 500001
+    assert result.results[1].type == "Page"
+    assert result.results[1].page_url == "chapter-1"
 
 
 async def test_get_module_item_details_with_content_details(

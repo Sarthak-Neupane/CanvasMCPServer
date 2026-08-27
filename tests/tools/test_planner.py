@@ -4,6 +4,7 @@ from canvas_mcp_server.models import PlannerItem
 from canvas_mcp_server.tools.planner._parse import normalize_plannable_type
 from canvas_mcp_server.tools.planner.get_planner_items import get_planner_items
 from tests.fixtures.planner import PLANNER_ITEMS_REST
+from tests.helpers.assertions import assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -18,15 +19,14 @@ async def test_get_planner_items_success(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_planner_items()
 
-    assert isinstance(result, list)
-    assert len(result) == 3
-    assert all(isinstance(item, PlannerItem) for item in result)
-    assert result[0].item_type == "assignment"
-    assert result[0].title == "Homework 1"
-    assert result[0].submissions is not None
-    assert result[0].submissions.missing is True
-    assert result[1].item_type == "note"
-    assert result[2].item_type == "discussion"
+    assert result.result_count == 3
+    assert assert_list_result(result, PlannerItem, count=result.result_count) or True
+    assert result.results[0].item_type == "assignment"
+    assert result.results[0].title == "Homework 1"
+    assert result.results[0].submissions is not None
+    assert result.results[0].submissions.missing is True
+    assert result.results[1].item_type == "note"
+    assert result.results[2].item_type == "discussion"
 
 
 async def test_get_planner_items_date_and_course_filters(

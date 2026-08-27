@@ -8,11 +8,12 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import DiscussionSummary
+from ...models import DiscussionSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
-DiscussionsResponse: TypeAlias = Union[List[DiscussionSummary], Dict[str, Any]]
+DiscussionsResponse: TypeAlias = Union[ListResult[DiscussionSummary], Dict[str, Any]]
 
 
 async def get_course_discussions(
@@ -46,11 +47,12 @@ async def get_course_discussions(
         if search_term:
             params["search_term"] = search_term
 
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/discussion_topics",
             params=params,
         )
-        return [DiscussionSummary.model_validate(topic) for topic in data]
+        items = [DiscussionSummary.model_validate(topic) for topic in paginated.items]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

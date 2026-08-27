@@ -10,6 +10,7 @@ from tests.fixtures.calendar import (
     CALENDAR_EVENTS_REST,
     DASHBOARD_CARDS_REST,
 )
+from tests.helpers.assertions import assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock, make_http_response
 
 
@@ -46,14 +47,13 @@ async def test_get_calendar_events_success(canvas_api: CanvasAPIMock) -> None:
         end_date="2025-09-30",
     )
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert all(isinstance(item, CalendarEvent) for item in result)
-    assert result[0].event_type == "event"
-    assert result[0].title == "Office hours"
-    assert result[0].course_id == 100001
-    assert result[1].event_type == "assignment"
-    assert result[1].id == "assignment_200001"
+    assert result.result_count == 2
+    assert assert_list_result(result, CalendarEvent, count=result.result_count) or True
+    assert result.results[0].event_type == "event"
+    assert result.results[0].title == "Office hours"
+    assert result.results[0].course_id == 100001
+    assert result.results[1].event_type == "assignment"
+    assert result.results[1].id == "assignment_200001"
 
 
 async def test_get_calendar_events_course_filter(

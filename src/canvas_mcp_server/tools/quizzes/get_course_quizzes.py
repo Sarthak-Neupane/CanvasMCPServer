@@ -8,12 +8,13 @@ from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...models import QuizSummary
+from ...models import QuizSummary, ListResult
+from ...utils.list_results import list_result
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._parse import sanitize_quiz_api_payload
 
-QuizzesResponse: TypeAlias = Union[List[QuizSummary], Dict[str, Any]]
+QuizzesResponse: TypeAlias = Union[ListResult[QuizSummary], Dict[str, Any]]
 
 
 async def get_course_quizzes(
@@ -44,16 +45,17 @@ async def get_course_quizzes(
         if search_term:
             params["search_term"] = search_term
 
-        data = await canvas_api_client.get_rest_paginated(
+        paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/quizzes",
             params=params,
         )
 
-        return [
+        items = [
             QuizSummary.model_validate(sanitize_quiz_api_payload(quiz))
-            for quiz in data
+            for quiz in paginated.items
             if isinstance(quiz, dict)
         ]
+        return list_result(items, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

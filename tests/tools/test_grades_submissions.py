@@ -26,6 +26,7 @@ from tests.fixtures.submissions import (
     SUBMISSION_STATUS_GRAPHQL,
     SUBMISSION_STATUS_ROSTER_LEAK_GRAPHQL,
 )
+from tests.helpers.assertions import assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -126,14 +127,13 @@ async def test_get_announcements(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_announcements("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert isinstance(result[0], Announcement)
-    assert result[0].id == "110001"
-    assert result[0].title == "Exam moved to Friday"
-    assert result[0].message == "<p>The midterm is now on Friday.</p>"
-    assert result[0].author is not None
-    assert result[0].author.name == "Dr. Instructor"
+    assert result.result_count == 1
+    assert isinstance(result.results[0], Announcement)
+    assert result.results[0].id == "110001"
+    assert result.results[0].title == "Exam moved to Friday"
+    assert result.results[0].message == "<p>The midterm is now on Friday.</p>"
+    assert result.results[0].author is not None
+    assert result.results[0].author.name == "Dr. Instructor"
 
 
 async def test_get_announcements_pagination(canvas_api: CanvasAPIMock) -> None:
@@ -142,7 +142,6 @@ async def test_get_announcements_pagination(canvas_api: CanvasAPIMock) -> None:
 
     result = await get_announcements("100001")
 
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert {item.id for item in result} == {"110001", "110002"}
+    assert result.result_count == 2
+    assert {item.id for item in result.results} == {"110001", "110002"}
     assert canvas_api.graphql.await_count == 2

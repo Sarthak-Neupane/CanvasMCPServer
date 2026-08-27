@@ -98,7 +98,8 @@ async def get_submission_status(
                 assignment_meta = assignment
             return assignment.get("submissionsConnection") or {"nodes": []}
 
-        nodes = await paginate_graphql_connection(fetch_connection, max_pages=5)
+        paginated = await paginate_graphql_connection(fetch_connection, max_pages=5)
+        nodes = paginated.items
         submissions = [
             SubmissionStatus.model_validate(node)
             for node in nodes
@@ -112,6 +113,7 @@ async def get_submission_status(
             dueAt=assignment_meta.get("dueAt"),
             pointsPossible=assignment_meta.get("pointsPossible"),
             submissions=submissions,
+            result_count=len(submissions),
         )
 
     except Exception as e:

@@ -30,3 +30,7 @@ class Rubric(BaseModel):
         List[RubricCriterion],
         Field(description="Rubric rows with rating levels"),
     ]
+    result_count: Annotated[
+        int,
+        Field(description="Number of rubric criteria"),
+    ] = 0

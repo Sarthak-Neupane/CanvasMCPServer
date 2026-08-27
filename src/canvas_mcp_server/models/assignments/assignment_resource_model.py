@@ -64,3 +64,7 @@ class AssignmentResources(BaseModel):
             ),
         ),
     ]
+    result_count: Annotated[
+        int,
+        Field(description="Number of resources discovered"),
+    ] = 0
