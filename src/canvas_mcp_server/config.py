@@ -23,6 +23,12 @@ class Config:
     CANVAS_API_TOKEN: str = os.getenv("CANVAS_API_TOKEN", "")
     CANVAS_BASE_URL: str = os.getenv("CANVAS_BASE_URL", "")
     CANVAS_TIMEOUT: int = int(os.getenv("CANVAS_TIMEOUT", "30"))
+    CANVAS_DOWNLOAD_DIR: str = os.getenv(
+        "CANVAS_DOWNLOAD_DIR", str(Path.home() / "Downloads" / "Canvas")
+    )
+    CANVAS_DOWNLOAD_TIMEOUT: int = int(
+        os.getenv("CANVAS_DOWNLOAD_TIMEOUT", os.getenv("CANVAS_TIMEOUT", "30"))
+    )
     
     # Debug Configuration
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
@@ -69,6 +75,39 @@ class Config:
             float: Timeout value in seconds.
         """
         return float(cls.CANVAS_TIMEOUT)
+
+    @classmethod
+    def get_download_dir(cls) -> Path:
+        """
+        Get the resolved absolute path for local Canvas downloads.
+
+        Returns:
+            Path: Expanded, absolute download root directory.
+        """
+        return Path(cls.CANVAS_DOWNLOAD_DIR).expanduser().resolve()
+
+    @classmethod
+    def get_download_timeout(cls) -> float:
+        """
+        Get timeout for binary file download requests.
+
+        Returns:
+            float: Timeout value in seconds.
+        """
+        return float(cls.CANVAS_DOWNLOAD_TIMEOUT)
+
+    @classmethod
+    def get_download_headers(cls) -> Dict[str, str]:
+        """
+        Headers for binary file downloads (no JSON Content-Type).
+
+        Returns:
+            Dict[str, str]: Authorization and User-Agent only.
+        """
+        return {
+            "Authorization": f"Bearer {cls.CANVAS_API_TOKEN}",
+            "User-Agent": "Canvas-MCP-Server/0.1.0",
+        }
 
 
 # Validate configuration on import

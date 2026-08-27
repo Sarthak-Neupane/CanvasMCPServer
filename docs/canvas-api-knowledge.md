@@ -299,6 +299,11 @@ top-level query for todo items or upcoming events — those are REST-only.
   folders returns a **flat** list of all subfolders. File objects use
   `content-type` (hyphenated) in JSON; responses include authenticated
   `url` download links but tools return metadata only (no local download).
+- **File downloads**: use the `url` from file metadata with Bearer auth (Canvas
+  often also includes a `verifier` query param). Local saves go under
+  `CANVAS_DOWNLOAD_DIR`; only relative subfolders are allowed from tools.
+  Assignment materials may be embedded in description HTML (`data-api-endpoint`
+  or `/files/:id` links) — parse those ids for `download_assignment_files`.
 - **Missing submissions**: `GET /api/v1/users/:user_id/missing_submissions`.
 
 ## 6. Looking up more documentation (for future tools)

@@ -14,6 +14,12 @@ from .courses import (
     get_course_by_id_tool,
     get_course_syllabus_tool,
 )
+from .downloads import (
+    download_assignment_files_tool,
+    download_course_files_tool,
+    download_file_tool,
+    download_module_files_tool,
+)
 from .files import (
     get_course_files_tool,
     get_course_folders_tool,
@@ -37,6 +43,10 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_course_folders_tool,
     get_folder_files_tool,
     get_file_details_tool,
+    download_file_tool,
+    download_course_files_tool,
+    download_module_files_tool,
+    download_assignment_files_tool,
     get_upcoming_assignments_tool,
     get_assignments_for_course_tool,
     get_assignment_details_tool,
@@ -58,6 +68,10 @@ __all__: Final[List[str]] = [
     "get_course_folders_tool",
     "get_folder_files_tool",
     "get_file_details_tool",
+    "download_file_tool",
+    "download_course_files_tool",
+    "download_module_files_tool",
+    "download_assignment_files_tool",
     "get_upcoming_assignments_tool",
     "get_assignments_for_course_tool",
     "get_assignment_details_tool",

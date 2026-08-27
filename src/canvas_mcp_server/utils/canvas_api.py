@@ -1,5 +1,7 @@
 """Canvas API client utilities for making Canvas-specific requests."""
 
+import httpx
+
 from typing import Dict, Any, Optional
 
 from ..config import config
@@ -97,6 +99,50 @@ class CanvasAPIClient(BaseHTTPClient):
             )
         except HTTPError as e:
             raise self._contextualize_error(e) from e
+
+    async def download_file_bytes(
+        self,
+        url: str,
+        timeout: Optional[float] = None,
+    ) -> bytes:
+        """
+        Download raw file bytes from a Canvas file URL.
+
+        Uses Authorization only (no JSON Content-Type). Follows redirects.
+
+        Args:
+            url: Authenticated download URL from the Files API.
+            timeout: Request timeout override in seconds.
+
+        Returns:
+            bytes: The file body.
+
+        Raises:
+            HTTPError: If the request fails or Canvas returns an error status.
+            ValueError: If required configuration is missing.
+        """
+        config.validate()
+        request_timeout = timeout or config.get_download_timeout()
+        headers = config.get_download_headers()
+        try:
+            async with httpx.AsyncClient(
+                timeout=request_timeout, follow_redirects=True
+            ) as client:
+                response = await client.get(url, headers=headers)
+                if not (200 <= response.status_code < 300):
+                    raise HTTPError(
+                        f"HTTP {response.status_code} error",
+                        status_code=response.status_code,
+                        response_data=response.text[:500],
+                        url=url,
+                    )
+                return response.content
+        except httpx.TimeoutException:
+            raise HTTPError(
+                f"Download timeout after {request_timeout}s", url=url
+            ) from None
+        except httpx.NetworkError as e:
+            raise HTTPError(f"Network error: {str(e)}", url=url) from e
 
     def _contextualize_error(self, e: HTTPError) -> HTTPError:
         """Wrap common HTTP errors with Canvas-specific guidance."""

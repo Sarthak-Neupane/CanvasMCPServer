@@ -24,6 +24,10 @@ through the [Canvas GraphQL API](https://developerdocs.instructure.com/services/
 | `get_course_folders` | List all folders in a course (flat list with full paths and file counts). |
 | `get_folder_files` | List files in a folder by `folder_id`. Optional `search_term` and `content_type`. |
 | `get_file_details` | Get metadata for one file by `file_id` (includes download URL; does not download). |
+| `download_file` | Download one file to `CANVAS_DOWNLOAD_DIR` (default `~/Downloads/Canvas/{course}/{folder?}/`). |
+| `download_course_files` | Download course files matching optional `search_term` / `content_type` filters. |
+| `download_module_files` | Download all File-type items from a module. |
+| `download_assignment_files` | Download files embedded in an assignment description. Optional relative `folder`. |
 | `get_upcoming_assignments` | List upcoming assignments across all courses with due dates and points. |
 | `get_assignments_for_course` | List all assignments in a course (name, due date, points, state, URL). |
 | `get_assignment_details` | Get one assignment's description, due/lock dates, grading type, submission types, and allowed attempts. |
@@ -88,11 +92,17 @@ pip install -e .
      [permanently discontinued in 2026](https://www.instructure.com/incident-update/customers),
      so an institution domain is required.
 
+   - **Downloads**: files are saved under `CANVAS_DOWNLOAD_DIR` (default
+     `~/Downloads/Canvas`), organized as `{course_name}/{optional_folder}/{filename}`.
+     Tools accept only a relative `folder` name — never an absolute path.
+
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `CANVAS_API_TOKEN` | yes | — | Canvas API access token |
 | `CANVAS_BASE_URL` | yes | — | Your institution's Canvas API base URL (must end at `/api`) |
 | `CANVAS_TIMEOUT` | no | `30` | Request timeout in seconds |
+| `CANVAS_DOWNLOAD_DIR` | no | `~/Downloads/Canvas` | Root directory for downloaded files |
+| `CANVAS_DOWNLOAD_TIMEOUT` | no | same as `CANVAS_TIMEOUT` | Timeout for binary file downloads |
 | `DEBUG` | no | `false` | Enable debug mode |
 | `LOG_LEVEL` | no | `INFO` | Log level |
 
