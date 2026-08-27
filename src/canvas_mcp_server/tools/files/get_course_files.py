@@ -9,7 +9,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import FileSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._params import build_file_list_params
@@ -38,6 +38,7 @@ async def get_course_files(
             ),
         ),
     ] = None,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> CourseFilesResponse:
     """
     List files in a Canvas course.
@@ -53,9 +54,10 @@ async def get_course_files(
         paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/files",
             params=build_file_list_params(search_term, content_type),
+            max_items=resolve_list_limit(limit),
         )
         items = [FileSummary.model_validate(item) for item in paginated.items]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

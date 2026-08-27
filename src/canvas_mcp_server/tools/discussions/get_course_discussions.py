@@ -9,7 +9,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import DiscussionSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
@@ -29,6 +29,7 @@ async def get_course_discussions(
             ),
         ),
     ] = None,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> DiscussionsResponse:
     """
     List discussion topics in a Canvas course (not announcements).
@@ -50,9 +51,10 @@ async def get_course_discussions(
         paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/discussion_topics",
             params=params,
+            max_items=resolve_list_limit(limit),
         )
         items = [DiscussionSummary.model_validate(topic) for topic in paginated.items]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

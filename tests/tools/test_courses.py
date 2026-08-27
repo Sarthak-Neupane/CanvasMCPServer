@@ -35,6 +35,7 @@ async def test_get_all_courses_graphql_success(canvas_api: CanvasAPIMock) -> Non
 
 async def test_get_all_courses_term_filter(canvas_api: CanvasAPIMock) -> None:
     canvas_api.graphql_returns(ALL_COURSES_GRAPHQL)
+    canvas_api.rest_returns("v1/courses", [REST_COURSES_ACTIVE[0]])
 
     result = await get_all_courses(term="Fall 2025")
 
@@ -42,13 +43,16 @@ async def test_get_all_courses_term_filter(canvas_api: CanvasAPIMock) -> None:
     assert result.results[0].name == "Intro to Testing"
     assert result.results[0].term is not None
     assert result.results[0].term.name == "Fall 2025"
+    paginated_call = canvas_api.get_rest_paginated_mock.await_args
+    assert paginated_call is not None
+    assert paginated_call.kwargs["params"]["enrollment_term_id"] == "9001"
 
 
 async def test_get_all_courses_active_only_dashboard_intersection(
     canvas_api: CanvasAPIMock,
 ) -> None:
     canvas_api.rest_returns("v1/dashboard/dashboard_cards", DASHBOARD_CARDS_REST)
-    canvas_api.rest_returns("v1/courses", REST_COURSES_ACTIVE)
+    canvas_api.rest_returns("v1/courses/100001", REST_COURSES_ACTIVE[0])
 
     result = await get_all_courses(active_only=True)
 

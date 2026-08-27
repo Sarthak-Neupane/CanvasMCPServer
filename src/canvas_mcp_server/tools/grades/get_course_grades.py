@@ -7,6 +7,7 @@ from pydantic import Field
 
 from ...models import CourseGrades, EnrollmentGrade
 from ...errors import as_tool_error
+from ..submissions._user import current_user_id
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import (
     DEFAULT_GRAPHQL_MAX_PAGES,
@@ -106,15 +107,6 @@ async def _fetch_all_student_enrollments(course_id: str) -> List[Dict[str, Any]]
     )
 
 
-async def _current_user_id() -> str:
-    """Resolve the authenticated Canvas user's numeric id."""
-    response = await canvas_api_client.get_rest("v1/users/self")
-    data = response.data
-    if not isinstance(data, dict) or data.get("id") is None:
-        raise Exception("Could not resolve the current Canvas user id")
-    return str(data["id"])
-
-
 def _enrollment_nodes(course: Dict[str, Any]) -> List[Dict[str, Any]]:
     connection = course.get("enrollmentsConnection") or {"nodes": []}
     nodes = connection.get("nodes") or []
@@ -145,7 +137,7 @@ async def get_course_grades(
     "status_code" keys on failure.
     """
     try:
-        self_id = await _current_user_id()
+        self_id = await current_user_id()
 
         # Always start scoped to self so a student token never pulls the roster.
         scoped_response = await canvas_api_client.post_graphql_query(

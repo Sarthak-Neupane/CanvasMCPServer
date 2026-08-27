@@ -6,7 +6,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import AssignmentSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import (
@@ -49,6 +49,7 @@ async def get_assignments_for_course(
             ),
         ),
     ],
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> AssignmentsResponse:
     """
     List all assignments in a Canvas course.
@@ -73,12 +74,14 @@ async def get_assignments_for_course(
                 raise Exception(f"No course found for id: {course_id}")
             return course["assignmentsConnection"]
 
+        item_limit = resolve_list_limit(limit)
         paginated = await paginate_graphql_connection(
             fetch_connection,
             max_pages=DEFAULT_GRAPHQL_MAX_PAGES,
+            max_items=item_limit,
         )
         items = [AssignmentSummary.model_validate(node) for node in paginated.items]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, item_limit, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_graphql")
@@ -88,7 +91,7 @@ get_assignments_for_course_tool: Final[Tool] = Tool.from_function(
     name="get_assignments_for_course",
     description=(
         "List all assignments in a Canvas course with summary fields "
-        "(id, name, due date, points possible, state, URL)."
+        "(id, name, due date, points possible, state, URL). Use limit to cap results."
     ),
     fn=get_assignments_for_course,
 )

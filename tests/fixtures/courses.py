@@ -8,6 +8,7 @@ ALL_COURSES_GRAPHQL = {
             "courseCode": "TEST101",
             "term": {
                 "id": "term-gid-9001",
+                "_id": "9001",
                 "name": "Fall 2025",
                 "startAt": "2025-08-15T00:00:00Z",
                 "endAt": "2025-12-15T23:59:59Z",
@@ -19,6 +20,7 @@ ALL_COURSES_GRAPHQL = {
             "courseCode": "TEST201",
             "term": {
                 "id": "term-gid-9002",
+                "_id": "9002",
                 "name": "Spring 2026",
                 "startAt": "2026-01-10T00:00:00Z",
                 "endAt": "2026-05-10T23:59:59Z",

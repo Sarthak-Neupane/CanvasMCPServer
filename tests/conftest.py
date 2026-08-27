@@ -6,7 +6,15 @@ import pytest
 
 from canvas_mcp_server.config import Config
 from canvas_mcp_server.utils.canvas_api import canvas_api_client
+from canvas_mcp_server.utils.token_cache import token_cache
 from tests.helpers.canvas_mock import CanvasAPIMock
+
+
+@pytest.fixture(autouse=True)
+def clear_token_cache() -> None:
+    token_cache.clear()
+    yield
+    token_cache.clear()
 
 
 @pytest.fixture

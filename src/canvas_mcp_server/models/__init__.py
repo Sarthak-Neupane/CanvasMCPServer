@@ -3,6 +3,7 @@ from typing import Final, List
 
 from .common.list_result_model import ListResult
 from .announcements.announcement_model import Announcement, AnnouncementAuthorRef
+from .announcements.announcement_summary_model import AnnouncementSummary
 from .assignments.assignment_detail_model import AssignmentCourseRef, AssignmentDetail
 from .assignments.assignment_resource_model import (
     AssignmentResource,
@@ -116,6 +117,7 @@ __all__: Final[List[str]] = [
     "GradeUserRef",
     # Announcements
     "Announcement",
+    "AnnouncementSummary",
     "AnnouncementAuthorRef",
     # Todos
     "TodoItem",

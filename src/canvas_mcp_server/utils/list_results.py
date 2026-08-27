@@ -6,6 +6,8 @@ from typing import Sequence, TypeVar
 
 from ..models.common.list_result_model import ListResult
 
+T = TypeVar("T")
+
 
 def list_result(
     items: Sequence[T],

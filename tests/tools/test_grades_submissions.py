@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from canvas_mcp_server.models import (
-    Announcement,
+    AnnouncementSummary,
     AssignmentSubmissions,
     CourseGrades,
 )
@@ -128,10 +128,9 @@ async def test_get_announcements(canvas_api: CanvasAPIMock) -> None:
     result = await get_announcements("100001")
 
     assert result.result_count == 1
-    assert isinstance(result.results[0], Announcement)
+    assert isinstance(result.results[0], AnnouncementSummary)
     assert result.results[0].id == "110001"
     assert result.results[0].title == "Exam moved to Friday"
-    assert result.results[0].message == "<p>The midterm is now on Friday.</p>"
     assert result.results[0].author is not None
     assert result.results[0].author.name == "Dr. Instructor"
 

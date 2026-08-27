@@ -5,12 +5,13 @@ REST endpoint GET /api/v1/users/self/upcoming_events and keeps only the
 entries that carry an assignment.
 """
 
-from typing import Final, List, Dict, Any, Union, TypeAlias
+from typing import Final, List, Dict, Any, Union, TypeAlias, Annotated
 
 from mcp.server.fastmcp.tools import Tool
+from pydantic import Field
 
 from ...models import UpcomingAssignment, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
@@ -19,7 +20,9 @@ UpcomingAssignmentsResponse: TypeAlias = Union[ListResult[UpcomingAssignment], D
 REST_ENDPOINT = "v1/users/self/upcoming_events"
 
 
-async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
+async def get_upcoming_assignments(
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
+) -> UpcomingAssignmentsResponse:
     """
     List the current user's upcoming Canvas assignments across all courses.
 
@@ -28,8 +31,11 @@ async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
     keys on failure.
     """
     try:
+        item_limit = resolve_list_limit(limit)
         paginated = await canvas_api_client.get_rest_paginated(
-            endpoint=REST_ENDPOINT, params={"per_page": 100}
+            endpoint=REST_ENDPOINT,
+            params={"per_page": 100},
+            max_items=item_limit,
         )
 
         assignments: List[UpcomingAssignment] = []
@@ -42,7 +48,11 @@ async def get_upcoming_assignments() -> UpcomingAssignmentsResponse:
                     {**assignment, "context_code": event.get("context_code")}
                 )
             )
-        return list_result(assignments, truncated=paginated.truncated)
+        return finalize_list(
+            assignments,
+            item_limit,
+            truncated=paginated.truncated,
+        )
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")
@@ -52,7 +62,7 @@ get_upcoming_assignments_tool: Final[Tool] = Tool.from_function(
     name="get_upcoming_assignments",
     description=(
         "List the current user's upcoming Canvas assignments across all "
-        "courses, with due dates, points, and links."
+        "courses, with due dates, points, and links. Use limit to cap results."
     ),
     fn=get_upcoming_assignments,
 )

@@ -9,7 +9,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import PageSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
@@ -29,6 +29,7 @@ async def get_course_pages(
             ),
         ),
     ] = None,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> PagesResponse:
     """
     List wiki pages in a Canvas course (metadata only).
@@ -47,9 +48,10 @@ async def get_course_pages(
         paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/pages",
             params=params,
+            max_items=resolve_list_limit(limit),
         )
         items = [PageSummary.model_validate(page) for page in paginated.items]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")
@@ -60,7 +62,7 @@ get_course_pages_tool: Final[Tool] = Tool.from_function(
     description=(
         "List wiki pages in a Canvas course (title, url slug, publish state, "
         "front-page flag). Does not return page HTML — use get_page for content. "
-        "Optional search_term filters by title."
+        "Optional search_term filters by title. Use limit to cap results."
     ),
     fn=get_course_pages,
 )

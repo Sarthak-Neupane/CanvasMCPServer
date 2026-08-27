@@ -1,12 +1,22 @@
 """Tool for listing all Canvas courses via the GraphQL API."""
 
-from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated, Set
+from __future__ import annotations
+
+import asyncio
+from typing import Final, List, Dict, Any, Optional, Union, TypeAlias, Annotated
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import CourseSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.dashboard import dashboard_course_ids
+from ...utils.list_limits import (
+    DEFAULT_LIST_LIMIT,
+    ListLimitField,
+    cap_items,
+    finalize_list,
+    resolve_list_limit,
+)
 from ...errors import as_tool_error
 from ...utils import canvas_api_client, extract_graphql_data
 
@@ -20,6 +30,7 @@ query {
     courseCode
     term {
         id
+        _id
         name
         startAt
         endAt
@@ -50,18 +61,54 @@ def _rest_course_to_summary(course: Dict[str, Any]) -> CourseSummary:
     )
 
 
-async def _dashboard_course_ids() -> Set[str]:
-    """
-    Return course ids that appear on the user's Canvas dashboard.
+async def _fetch_rest_course_summary(course_id: str) -> Optional[CourseSummary]:
+    response = await canvas_api_client.get_rest(
+        f"v1/courses/{course_id}",
+        params={"include[]": "term"},
+    )
+    data = response.data
+    if not isinstance(data, dict):
+        return None
+    if data.get("access_restricted_by_date"):
+        return None
+    return _rest_course_to_summary(data)
 
-    enrollment_state=active is weaker than this: Canvas can keep old or
-    open-ended enrollments marked active long after they leave the dashboard.
-    """
-    response = await canvas_api_client.get_rest("v1/dashboard/dashboard_cards")
-    cards = response.data
-    if not isinstance(cards, list):
-        raise Exception("Canvas dashboard_cards response was not a list")
-    return {str(card["id"]) for card in cards if isinstance(card, dict) and "id" in card}
+
+async def _term_id_for_name(term_name: str) -> Optional[str]:
+    """Resolve a REST enrollment_term_id from a human term name."""
+    response = await canvas_api_client.post_graphql_query(query=GRAPHQL_QUERY)
+    data = extract_graphql_data(response)
+    for course in data.get("allCourses") or []:
+        if not isinstance(course, dict):
+            continue
+        term = course.get("term") or {}
+        if term.get("name") != term_name:
+            continue
+        term_id = term.get("_id") or term.get("id")
+        if term_id is not None:
+            return str(term_id)
+    return None
+
+
+async def _courses_for_term(term_name: str, limit: int) -> tuple[List[CourseSummary], bool]:
+    term_id = await _term_id_for_name(term_name)
+    if term_id is None:
+        return [], False
+    paginated = await canvas_api_client.get_rest_paginated(
+        "v1/courses",
+        params={
+            "enrollment_term_id": term_id,
+            "include[]": "term",
+            "per_page": 100,
+        },
+        max_items=limit,
+    )
+    courses = [
+        _rest_course_to_summary(course)
+        for course in paginated.items
+        if isinstance(course, dict)
+    ]
+    return courses, paginated.truncated
 
 
 async def get_all_courses(
@@ -89,6 +136,7 @@ async def get_all_courses(
             ),
         ),
     ] = False,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> CoursesResponse:
     """
     Get Canvas courses for the current user.
@@ -102,41 +150,36 @@ async def get_all_courses(
     or an error object with "error", "message", and optionally "status_code" keys.
     """
     try:
+        item_limit = resolve_list_limit(limit)
         truncated = False
+
         if active_only:
-            # Dashboard cards are the contract for "current" courses. Hydrate
-            # with REST /v1/courses (+ term) so summaries keep the same shape
-            # as the non-active path.
-            dashboard_ids = await _dashboard_course_ids()
-            paginated = await canvas_api_client.get_rest_paginated(
-                "v1/courses",
-                params={
-                    "enrollment_state": "active",
-                    "include[]": "term",
-                    "per_page": 100,
-                },
+            dashboard_ids = sorted(await dashboard_course_ids())
+            if len(dashboard_ids) > item_limit:
+                truncated = True
+            fetch_ids = dashboard_ids[:item_limit]
+            summaries = await asyncio.gather(
+                *[_fetch_rest_course_summary(course_id) for course_id in fetch_ids]
             )
-            truncated = paginated.truncated
-            courses = [
-                _rest_course_to_summary(course)
-                for course in paginated.items
-                if isinstance(course, dict)
-                and str(course.get("id")) in dashboard_ids
-                and not course.get("access_restricted_by_date")
-            ]
-        else:
-            response = await canvas_api_client.post_graphql_query(GRAPHQL_QUERY)
-            data = extract_graphql_data(response)
-            course_list = data["allCourses"]
-            courses = [CourseSummary.model_validate(course) for course in course_list]
+            courses = [course for course in summaries if course is not None]
+            if term:
+                courses = [
+                    course
+                    for course in courses
+                    if course.term and course.term.name == term
+                ]
+            return finalize_list(courses, item_limit, truncated=truncated)
 
         if term:
-            courses = [
-                course
-                for course in courses
-                if course.term and course.term.name == term
-            ]
-        return list_result(courses, truncated=truncated)
+            courses, truncated = await _courses_for_term(term, item_limit)
+            return finalize_list(courses, item_limit, truncated=truncated)
+
+        response = await canvas_api_client.post_graphql_query(GRAPHQL_QUERY)
+        data = extract_graphql_data(response)
+        course_list = data["allCourses"]
+        courses = [CourseSummary.model_validate(course) for course in course_list]
+        capped, cut = cap_items(courses, item_limit)
+        return finalize_list(capped, item_limit, truncated=cut)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_graphql")
@@ -149,7 +192,7 @@ get_all_courses_tool: Final[Tool] = Tool.from_function(
         "(id, name, course code, term). Set active_only=true to return only "
         "courses on the Canvas dashboard (current courses / this semester) — "
         "not every enrollment_state=active course. Optionally filter by term "
-        "name, e.g. 'Fall 2025'."
+        "name, e.g. 'Fall 2025'. Use limit to cap how many courses are returned."
     ),
     fn=get_all_courses,
 )

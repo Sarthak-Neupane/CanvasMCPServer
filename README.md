@@ -155,7 +155,8 @@ Full catalog and agent guidance: [docs/errors.md](docs/errors.md).
 ## Output conventions
 
 List tools return a `ListResult` object (`results`, `result_count`, `truncated`)
-instead of a bare array. GraphQL-backed models use **camelCase**; REST-backed
+instead of a bare array. Each list tool accepts `limit` (default 50, max 100).
+GraphQL-backed models use **camelCase**; REST-backed
 models use **snake_case**. Timestamps serialize as ISO-8601; nullable fields
 serialize as JSON `null`.
 

@@ -9,7 +9,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import PlannerItem, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._parse import planner_item_from_api
@@ -45,6 +45,7 @@ async def get_planner_items(
             ),
         ),
     ] = None,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> PlannerItemsResponse:
     """
     List items on the Canvas student planner.
@@ -65,13 +66,15 @@ async def get_planner_items(
         if course_id:
             params["context_codes[]"] = f"course_{course_id}"
 
+        item_limit = resolve_list_limit(limit)
         paginated = await canvas_api_client.get_rest_paginated(
             endpoint=REST_ENDPOINT,
             params=params,
+            max_items=item_limit,
         )
 
         items = [planner_item_from_api(item) for item in paginated.items if isinstance(item, dict)]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, item_limit, truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

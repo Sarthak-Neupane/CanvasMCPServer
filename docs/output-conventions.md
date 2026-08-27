@@ -57,6 +57,16 @@ Tools that return collections use `ListResult` instead of a bare JSON array:
 - `search_course_content` ranks more matches than the `limit` parameter
 - `max_items` cuts a paginated fetch short
 
+### `limit` parameter
+
+List tools accept `limit` (default **50**, max **100**). Pagination stops early
+when the cap is reached; `truncated` is set when Canvas may have more items.
+
+Discovery list tools return **summaries only** (no HTML bodies). Use detail
+tools (`get_page`, `get_assignment_details`, `get_discussion`, etc.) for full
+content. `get_announcements` returns metadata only — use `get_discussion` for
+the announcement message.
+
 ### Wrapper models with embedded lists
 
 Some tools return a single object with a named list plus `result_count`:

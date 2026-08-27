@@ -10,7 +10,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import ModuleItemSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
@@ -42,6 +42,7 @@ async def get_module_items(
             ),
         ),
     ] = None,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> ModuleItemsResponse:
     """
     List items in a Canvas course module.
@@ -61,9 +62,10 @@ async def get_module_items(
         paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/modules/{module_id}/items",
             params=params,
+            max_items=resolve_list_limit(limit),
         )
         items = [ModuleItemSummary.model_validate(item) for item in paginated.items]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")

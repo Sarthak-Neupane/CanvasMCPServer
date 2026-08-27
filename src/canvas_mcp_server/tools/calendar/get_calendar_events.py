@@ -9,7 +9,8 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import CalendarEvent, ListResult
-from ...utils.list_results import list_result
+from ...utils.dashboard import dashboard_course_ids
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 from ._parse import calendar_event_from_api
@@ -17,26 +18,14 @@ from ._parse import calendar_event_from_api
 CalendarEventsResponse: TypeAlias = Union[ListResult[CalendarEvent], Dict[str, Any]]
 
 REST_ENDPOINT = "v1/calendar_events"
-DASHBOARD_ENDPOINT = "v1/dashboard/dashboard_cards"
 MAX_CONTEXT_CODES = 10
 EVENT_TYPES = ("event", "assignment")
 
 
 async def _dashboard_context_codes() -> List[str]:
     """Course context codes from the user's dashboard (Canvas caps at 10)."""
-    response = await canvas_api_client.get_rest(endpoint=DASHBOARD_ENDPOINT)
-    cards = response.data
-    if not isinstance(cards, list):
-        raise Exception("Canvas dashboard_cards response was not a list")
-
-    codes: List[str] = []
-    for card in cards:
-        if not isinstance(card, dict) or "id" not in card:
-            continue
-        codes.append(f"course_{card['id']}")
-        if len(codes) >= MAX_CONTEXT_CODES:
-            break
-    return codes
+    ids = sorted(await dashboard_course_ids())
+    return [f"course_{course_id}" for course_id in ids[:MAX_CONTEXT_CODES]]
 
 
 async def _fetch_calendar_events(
@@ -45,6 +34,7 @@ async def _fetch_calendar_events(
     start_date: Optional[str],
     end_date: Optional[str],
     context_codes: List[str],
+    max_items: Optional[int],
 ) -> tuple[List[CalendarEvent], bool]:
     params: Dict[str, Any] = {
         "type": event_type,
@@ -61,6 +51,7 @@ async def _fetch_calendar_events(
     paginated = await canvas_api_client.get_rest_paginated(
         endpoint=REST_ENDPOINT,
         params=params,
+        max_items=max_items,
     )
 
     events = [
@@ -98,6 +89,7 @@ async def get_calendar_events(
             ),
         ),
     ] = None,
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> CalendarEventsResponse:
     """
     List calendar events and assignment due dates from Canvas.
@@ -110,6 +102,7 @@ async def get_calendar_events(
     "status_code" keys on failure.
     """
     try:
+        item_limit = resolve_list_limit(limit)
         if course_id:
             context_codes = [f"course_{course_id}"]
         else:
@@ -123,6 +116,7 @@ async def get_calendar_events(
                 start_date=start_date,
                 end_date=end_date,
                 context_codes=context_codes,
+                max_items=item_limit,
             )
             events.extend(batch)
             truncated = truncated or batch_truncated
@@ -133,7 +127,7 @@ async def get_calendar_events(
                 item.start_at or item.all_day_date or "",
             )
         )
-        return list_result(events, truncated=truncated)
+        return finalize_list(events, item_limit, truncated=truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")
@@ -143,7 +137,7 @@ get_calendar_events_tool: Final[Tool] = Tool.from_function(
     name="get_calendar_events",
     description=(
         "List Canvas calendar events and assignment due dates with optional "
-        "start_date, end_date, and course_id filters."
+        "start_date, end_date, and course_id filters. Use limit to cap results."
     ),
     fn=get_calendar_events,
 )

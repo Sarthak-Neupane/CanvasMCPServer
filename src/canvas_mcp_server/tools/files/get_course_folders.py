@@ -9,7 +9,7 @@ from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
 from ...models import FolderSummary, ListResult
-from ...utils.list_results import list_result
+from ...utils.list_limits import DEFAULT_LIST_LIMIT, ListLimitField, finalize_list, resolve_list_limit
 from ...errors import as_tool_error
 from ...utils import canvas_api_client
 
@@ -21,6 +21,7 @@ async def get_course_folders(
         str,
         Field(description="The course ID (numeric Canvas ID, e.g. '182571')."),
     ],
+    limit: ListLimitField = DEFAULT_LIST_LIMIT,
 ) -> CourseFoldersResponse:
     """
     List all folders in a Canvas course.
@@ -36,9 +37,10 @@ async def get_course_folders(
         paginated = await canvas_api_client.get_rest_paginated(
             endpoint=f"v1/courses/{course_id}/folders",
             params={"per_page": 100},
+            max_items=resolve_list_limit(limit),
         )
         items = [FolderSummary.model_validate(item) for item in paginated.items]
-        return list_result(items, truncated=paginated.truncated)
+        return finalize_list(items, resolve_list_limit(limit), truncated=paginated.truncated)
 
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")
