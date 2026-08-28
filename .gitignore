@@ -182,6 +182,7 @@ cython_debug/
 
 # Local planning / roadmap (not for the public repo)
 docs/student-readonly-v1-roadmap.md
+docs/student-v1-stabilization-sprint.md
 .cursor/
 
 # MCP Server specific
