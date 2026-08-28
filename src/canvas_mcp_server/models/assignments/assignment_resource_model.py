@@ -47,6 +47,19 @@ class AssignmentResource(BaseModel):
 class AssignmentResources(BaseModel):
     """Resources linked from one assignment's description HTML."""
 
+    status: Annotated[
+        str,
+        Field(
+            default="ok",
+            description="Outcome status: 'ok', 'empty', or 'external_tool'",
+        ),
+    ] = "ok"
+    empty_reason: Annotated[
+        Optional[str],
+        Field(
+            description="Explanatory message when resources list is empty",
+        ),
+    ] = None
     course_id: Annotated[str, Field(description="The course id")]
     assignment_id: Annotated[str, Field(description="The assignment id")]
     assignment_name: Annotated[

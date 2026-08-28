@@ -63,6 +63,29 @@ async def test_get_assignment_resources_empty_description(
 
     assert isinstance(result, AssignmentResources)
     assert result.resources == []
+    assert result.status == "empty"
+    assert result.empty_reason is not None
+
+
+async def test_get_assignment_resources_external_tool(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    canvas_api.rest_returns(
+        "v1/courses/100001/assignments/200001",
+        {
+            "id": 200001,
+            "name": "WebAssign HW 1",
+            "description": "",
+            "submission_types": ["external_tool"],
+        },
+    )
+
+    result = await get_assignment_resources("100001", "200001")
+
+    assert isinstance(result, AssignmentResources)
+    assert result.resources == []
+    assert result.status == "external_tool"
+    assert "third-party tool" in (result.empty_reason or "")
 
 
 async def test_get_assignment_resources_not_found(canvas_api: CanvasAPIMock) -> None:

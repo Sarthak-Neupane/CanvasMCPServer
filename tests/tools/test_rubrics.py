@@ -55,6 +55,10 @@ async def test_get_assignment_rubric_not_found(canvas_api: CanvasAPIMock) -> Non
         title="Not Found",
         message_contains="no rubric",
     )
+    assert isinstance(result, dict)
+    details = result.get("details") or {}
+    assert details.get("reason") == "no_rubric"
+    assert details.get("status") == "not_applicable"
 
 
 async def test_get_assignment_rubric_http_error(canvas_api: CanvasAPIMock) -> None:

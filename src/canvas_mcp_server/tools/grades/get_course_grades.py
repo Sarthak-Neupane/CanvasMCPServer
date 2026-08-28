@@ -5,7 +5,8 @@ from typing import Annotated, Any, Dict, Final, List, TypeAlias, Union
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...errors import as_tool_error
+from ...errors import as_tool_error, tool_error
+from ...errors.codes import ErrorCode
 from ...models import CourseGrades, EnrollmentGrade
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import (
@@ -150,7 +151,12 @@ async def get_course_grades(
         scoped_data = extract_graphql_data(scoped_response)
         course = scoped_data.get("course")
         if course is None:
-            raise Exception(f"No course found for id: {course_id}")
+            return tool_error(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                f"Course {course_id} not found.",
+                source="canvas_graphql",
+                details={"course_id": course_id},
+            ).to_response()
 
         permissions = course.get("permissions") or {}
         can_view_all = bool(

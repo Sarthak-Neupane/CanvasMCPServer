@@ -1,6 +1,6 @@
 """Tool for discovering resources linked in a Canvas assignment description."""
 
-from typing import Annotated, Any, Dict, Final, TypeAlias, Union
+from typing import Annotated, Any, Dict, Final, Optional, TypeAlias, Union
 
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
@@ -47,7 +47,30 @@ async def get_assignment_resources(
             default_course_id=course_id,
         )
 
+        submission_types = data.get("submission_types") or []
+        is_external_tool = (
+            "external_tool" in submission_types
+            or data.get("external_tool_tag_attributes") is not None
+        )
+
+        status = "ok"
+        empty_reason: Optional[str] = None
+        if len(resources) == 0:
+            if is_external_tool:
+                status = "external_tool"
+                empty_reason = (
+                    "Assignment content is hosted externally in a third-party tool "
+                    "(e.g. WebAssign, MindTap). Canvas does not store embedded file resources."
+                )
+            else:
+                status = "empty"
+                empty_reason = (
+                    "No embedded links or files found in assignment description HTML."
+                )
+
         return AssignmentResources(
+            status=status,
+            empty_reason=empty_reason,
             course_id=course_id,
             assignment_id=str(data.get("id", assignment_id)),
             assignment_name=data.get("name"),

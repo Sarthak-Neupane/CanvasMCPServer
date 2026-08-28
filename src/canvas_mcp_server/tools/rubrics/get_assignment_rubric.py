@@ -49,6 +49,11 @@ async def get_assignment_rubric(
                 ErrorCode.RUBRIC_NOT_FOUND,
                 "This assignment has no rubric.",
                 source="canvas_rest",
+                details={
+                    "reason": "no_rubric",
+                    "status": "not_applicable",
+                    "assignment_id": assignment_id,
+                },
             ).to_response()
         return rubric
 

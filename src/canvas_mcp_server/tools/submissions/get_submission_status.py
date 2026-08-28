@@ -5,7 +5,8 @@ from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...errors import as_tool_error
+from ...errors import as_tool_error, tool_error
+from ...errors.codes import ErrorCode
 from ...models import AssignmentSubmissions, SubmissionStatus
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.graphql_pagination import paginate_graphql_connection
@@ -79,9 +80,10 @@ async def get_submission_status(
     try:
         self_id = await current_user_id()
         assignment_meta: Dict[str, Any] | None = None
+        assignment_not_found = False
 
         async def fetch_connection(after: str | None) -> Dict[str, Any]:
-            nonlocal assignment_meta
+            nonlocal assignment_meta, assignment_not_found
             response = await canvas_api_client.post_graphql_query(
                 query=GRAPHQL_QUERY,
                 variables={
@@ -93,20 +95,27 @@ async def get_submission_status(
             data = extract_graphql_data(response)
             assignment = data.get("assignment")
             if assignment is None:
-                raise Exception(f"No assignment found for id: {assignment_id}")
+                assignment_not_found = True
+                return {"nodes": []}
             if assignment_meta is None:
                 assignment_meta = assignment
             return assignment.get("submissionsConnection") or {"nodes": []}
 
         paginated = await paginate_graphql_connection(fetch_connection, max_pages=5)
+        if assignment_not_found or assignment_meta is None:
+            return tool_error(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                f"Assignment {assignment_id} not found.",
+                source="canvas_graphql",
+                details={"assignment_id": assignment_id},
+            ).to_response()
+
         nodes = paginated.items
         submissions = [
             SubmissionStatus.model_validate(node)
             for node in nodes
             if str((node.get("user") or {}).get("_id")) == self_id
         ]
-        if assignment_meta is None:
-            raise Exception(f"No assignment found for id: {assignment_id}")
         return AssignmentSubmissions(
             assignmentId=assignment_meta["_id"],
             assignmentName=assignment_meta.get("name"),

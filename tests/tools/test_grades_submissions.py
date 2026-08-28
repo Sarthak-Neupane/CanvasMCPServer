@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from canvas_mcp_server.errors import ErrorCode
 from canvas_mcp_server.models import (
     AnnouncementSummary,
     AssignmentSubmissions,
@@ -28,7 +29,7 @@ from tests.fixtures.submissions import (
     SUBMISSION_STATUS_GRAPHQL,
     SUBMISSION_STATUS_ROSTER_LEAK_GRAPHQL,
 )
-from tests.helpers.assertions import assert_list_result
+from tests.helpers.assertions import assert_list_result, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -146,3 +147,31 @@ async def test_get_announcements_pagination(canvas_api: CanvasAPIMock) -> None:
     assert result.result_count == 2
     assert {item.id for item in result.results} == {"110001", "110002"}
     assert canvas_api.graphql.await_count == 2
+
+
+async def test_get_submission_status_not_found(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_returns("v1/users/self", USERS_SELF_REST)
+    canvas_api.graphql_returns({"data": {"assignment": None}})
+
+    result = await get_submission_status("999999")
+
+    assert_tool_error(
+        result,
+        ErrorCode.RESOURCE_NOT_FOUND,
+        title="Not Found",
+        message_contains="Assignment 999999 not found",
+    )
+
+
+async def test_get_course_grades_not_found(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_returns("v1/users/self", USERS_SELF_REST)
+    canvas_api.graphql_returns({"data": {"course": None}})
+
+    result = await get_course_grades("999999")
+
+    assert_tool_error(
+        result,
+        ErrorCode.RESOURCE_NOT_FOUND,
+        title="Not Found",
+        message_contains="Course 999999 not found",
+    )

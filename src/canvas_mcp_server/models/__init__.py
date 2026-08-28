@@ -14,6 +14,7 @@ from .assignments.assignment_summary_model import AssignmentSummary
 from .assignments.upcoming_assignment_model import UpcomingAssignment
 from .calendar.calendar_event_model import CalendarEvent
 from .common.list_result_model import ListResult
+from .common.result_status import ResultStatus
 from .courses.course_calendar_model import CalendarLink
 from .courses.course_detail_model import CourseDetail
 from .courses.course_progress_model import CourseProgress
@@ -72,6 +73,7 @@ from .todos.todo_item_model import TodoAssignmentRef, TodoItem
 __all__: Final[List[str]] = [
     # Common
     "ListResult",
+    "ResultStatus",
     # Courses
     "CourseDetail",
     "CalendarLink",
