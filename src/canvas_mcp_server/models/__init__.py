@@ -4,7 +4,11 @@ from typing import Final, List
 
 from .announcements.announcement_model import Announcement, AnnouncementAuthorRef
 from .announcements.announcement_summary_model import AnnouncementSummary
-from .assignments.assignment_detail_model import AssignmentCourseRef, AssignmentDetail
+from .assignments.assignment_detail_model import (
+    AssignmentCourseRef,
+    AssignmentDetail,
+    AssignmentExternalTool,
+)
 from .assignments.assignment_resource_model import (
     AssignmentResource,
     AssignmentResources,
@@ -86,6 +90,7 @@ __all__: Final[List[str]] = [
     "AssignmentSummary",
     "AssignmentDetail",
     "AssignmentCourseRef",
+    "AssignmentExternalTool",
     "AssignmentResource",
     "AssignmentResources",
     "AssignmentResourceType",

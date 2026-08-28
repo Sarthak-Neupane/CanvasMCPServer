@@ -18,6 +18,23 @@ class AssignmentCourseRef(BaseModel):
     ] = None
 
 
+class AssignmentExternalTool(BaseModel):
+    """External tool (LTI) launch or configuration metadata."""
+
+    url: Annotated[
+        Optional[str],
+        Field(description="External tool launch or configuration URL"),
+    ] = None
+    new_tab: Annotated[
+        Optional[bool],
+        Field(description="Whether the external tool opens in a new browser tab"),
+    ] = None
+    resource_link_id: Annotated[
+        Optional[str],
+        Field(description="LTI resource link identifier"),
+    ] = None
+
+
 class AssignmentDetail(AssignmentSummary, UntrustedContentMixin):
     description: Annotated[
         Optional[str],
@@ -54,4 +71,21 @@ class AssignmentDetail(AssignmentSummary, UntrustedContentMixin):
     course: Annotated[
         Optional[AssignmentCourseRef],
         Field(description="The course this assignment belongs to"),
+    ] = None
+    canvas_content_available: Annotated[
+        Optional[bool],
+        Field(
+            description=(
+                "True when instructions and content are hosted directly in Canvas; "
+                "False when hosted externally (e.g. WebAssign, MindTap, Zybooks)"
+            ),
+        ),
+    ] = None
+    external_tool: Annotated[
+        Optional[AssignmentExternalTool],
+        Field(
+            description=(
+                "Metadata for third-party LTI tool when submission_types includes 'external_tool'"
+            ),
+        ),
     ] = None

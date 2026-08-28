@@ -72,6 +72,28 @@ ASSIGNMENT_DETAIL_GRAPHQL = {
     }
 }
 
+ASSIGNMENT_DETAIL_EXTERNAL_TOOL_GRAPHQL = {
+    "assignment": {
+        "_id": "200003",
+        "name": "WebAssign Homework 1",
+        "description": "",
+        "dueAt": "2025-09-20T23:59:00Z",
+        "unlockAt": None,
+        "lockAt": None,
+        "pointsPossible": 20.0,
+        "state": "published",
+        "htmlUrl": "https://canvas.example.edu/courses/100001/assignments/200003",
+        "gradingType": "points",
+        "submissionTypes": ["external_tool"],
+        "allowedAttempts": 1,
+        "course": {"_id": "100001", "name": "Intro to Testing"},
+        "external_tool": {
+            "url": "https://webassign.net/canvas/launch",
+            "new_tab": True,
+        },
+    }
+}
+
 UPCOMING_EVENTS_REST = [
     {
         "id": 900001,

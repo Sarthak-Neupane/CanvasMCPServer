@@ -20,6 +20,7 @@ from canvas_mcp_server.tools.assignments.get_upcoming_assignments import (
 )
 from canvas_mcp_server.tools.todos.get_todo_items import get_todo_items
 from tests.fixtures.assignments import (
+    ASSIGNMENT_DETAIL_EXTERNAL_TOOL_GRAPHQL,
     ASSIGNMENT_DETAIL_GRAPHQL,
     ASSIGNMENTS_CONNECTION_GRAPHQL,
     ASSIGNMENTS_CONNECTION_PAGE_1,
@@ -86,6 +87,25 @@ async def test_get_assignment_details(canvas_api: CanvasAPIMock) -> None:
     assert result.course is not None
     assert result.course.id == "100001"
     assert result.course.name == "Intro to Testing"
+    assert result.canvas_content_available is True
+    assert result.external_tool is None
+
+
+async def test_get_assignment_details_external_tool(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    canvas_api.graphql_returns(ASSIGNMENT_DETAIL_EXTERNAL_TOOL_GRAPHQL)
+
+    result = await get_assignment_details("200003")
+
+    assert isinstance(result, AssignmentDetail)
+    assert result.id == "200003"
+    assert result.name == "WebAssign Homework 1"
+    assert result.submissionTypes == ["external_tool"]
+    assert result.canvas_content_available is False
+    assert result.external_tool is not None
+    assert result.external_tool.url == "https://webassign.net/canvas/launch"
+    assert result.external_tool.new_tab is True
 
 
 async def test_get_assignment_details_not_found(canvas_api: CanvasAPIMock) -> None:

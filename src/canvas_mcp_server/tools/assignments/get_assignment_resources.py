@@ -88,7 +88,8 @@ get_assignment_resources_tool: Final[Tool] = Tool.from_function(
         "Discover resources linked in a Canvas assignment description: files, "
         "pages, external URLs, and other course objects. Metadata only — does "
         "not download. Use before download_assignment_files when you need to see "
-        "what is embedded."
+        "what is embedded. For external-tool assignments (WebAssign, MindTap), "
+        "returns status='external_tool' with an explanatory empty_reason."
     ),
     fn=get_assignment_resources,
 )
