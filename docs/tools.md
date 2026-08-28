@@ -1,6 +1,6 @@
 # MCP tool reference (student read-only v1)
 
-All **34** tools are read-only except the four `download_*` tools, which write
+All **35** tools are read-only except the four `download_*` tools, which write
 files to `CANVAS_DOWNLOAD_DIR` only. On failure, tools return a structured error
 object — see [errors.md](errors.md).
 
@@ -14,6 +14,7 @@ default `limit=50` (max 100). See [output-conventions.md](output-conventions.md)
 | `get_course_syllabus` | REST | detail | no | Syllabus HTML + plain text |
 | `get_course_pages` | REST | list | no | Metadata only; `search_term`, `limit` |
 | `get_page` | REST | detail | no | Slug, id, or Canvas path |
+| `get_page_resources` | REST | wrapper | no | Linked files/pages/URLs in wiki page body |
 | `get_course_modules` | REST | list | no | Structure only; `search_term`, `limit` |
 | `get_module_items` | REST | list | no | No `content_details`; `search_term`, `limit` |
 | `get_module_item_details` | REST | detail | no | Lock/due/points when available |
@@ -52,6 +53,9 @@ default `limit=50` (max 100). See [output-conventions.md](output-conventions.md)
 
 **Assignment deep-dive:** `get_assignments_for_course` → `get_assignment_details` →
 `get_assignment_resources` → `get_submission_status` / `get_submission_feedback`
+
+**Page & lecture discovery:** `get_course_pages` → `get_page` → `get_page_resources` →
+`download_file` (for attached worksheets, slides, or readings)
 
 **Module navigation:** `get_course_modules` → `get_module_items` →
 `get_module_item_details` / `get_page` / `get_assignment_details`

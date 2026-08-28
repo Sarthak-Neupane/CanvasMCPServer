@@ -106,6 +106,7 @@ When Canvas resources or collections return empty or unavailable results, tools 
 | `get_submission_status` | Assignment not submitted yet | `AssignmentSubmissions(submissions=[...])` with `submissionStatus='unsubmitted'` or empty list |
 | `get_submission_feedback` | No comments or rubric grading | `SubmissionFeedback(comments=[], rubric_assessment={}, attachments=[])` |
 | `get_assignment_resources` | No embedded files/links in description | `AssignmentResources(status='empty' | 'external_tool', empty_reason=..., resources=[])` |
+| `get_page_resources` | No embedded files/links in page body | `PageResources(status='empty', empty_reason=..., resources=[])` |
 | `download_*` (batch) | No matching files found or all skipped | `DownloadBatchResult(status='nothing_found' | 'all_skipped' | 'completed' | 'completed_with_failures' | 'failed')` |
 
 ## Wrapper models with embedded lists
@@ -116,6 +117,7 @@ Some tools return a single object with a named list plus `result_count`:
 | --- | --- | --- |
 | `get_discussion_entries` | `DiscussionEntries` | `entries` |
 | `get_assignment_resources` | `AssignmentResources` | `resources` |
+| `get_page_resources` | `PageResources` | `resources` |
 | `get_submission_status` | `AssignmentSubmissions` | `submissions` |
 | `get_course_grades` | `CourseGrades` | `enrollments` |
 | `get_assignment_rubric` | `Rubric` | `criteria` |

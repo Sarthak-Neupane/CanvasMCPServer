@@ -4,14 +4,25 @@ from __future__ import annotations
 
 import pytest
 
-from canvas_mcp_server.models import PageDetail, PageSummary
+from canvas_mcp_server.models import (
+    AssignmentResourceType,
+    PageDetail,
+    PageResources,
+    PageSummary,
+)
 from canvas_mcp_server.tools.pages._params import (
     normalize_page_locator,
     page_endpoint_segment,
 )
 from canvas_mcp_server.tools.pages.get_course_pages import get_course_pages
 from canvas_mcp_server.tools.pages.get_page import get_page
-from tests.fixtures.pages import PAGE_DETAIL_REST, PAGES_LIST_REST
+from canvas_mcp_server.tools.pages.get_page_resources import get_page_resources
+from tests.fixtures.pages import (
+    PAGE_DETAIL_EMPTY_RESOURCES_REST,
+    PAGE_DETAIL_REST,
+    PAGE_DETAIL_WITH_RESOURCES_REST,
+    PAGES_LIST_REST,
+)
 from tests.helpers.assertions import assert_http_error, assert_list_result
 from tests.helpers.canvas_mock import CanvasAPIMock
 
@@ -105,5 +116,65 @@ async def test_get_page_not_found(canvas_api: CanvasAPIMock) -> None:
     )
 
     result = await get_page("100001", "missing-page")
+
+    assert_http_error(result, 404)
+
+
+async def test_get_page_resources_success(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_returns(
+        "v1/courses/100001/pages/lecture-2-materials",
+        PAGE_DETAIL_WITH_RESOURCES_REST,
+    )
+
+    result = await get_page_resources("100001", "lecture-2-materials")
+
+    assert isinstance(result, PageResources)
+    assert result.course_id == "100001"
+    assert result.page_url == "lecture-2-materials"
+    assert result.page_title == "Lecture 2 Materials"
+    assert result.status == "ok"
+    assert result.result_count == 3
+    assert len(result.resources) == 3
+
+    file_res = next(
+        r for r in result.resources if r.type == AssignmentResourceType.FILE
+    )
+    assert file_res.id == "500002"
+    assert file_res.label == "Lecture Slides"
+
+    page_res = next(
+        r for r in result.resources if r.type == AssignmentResourceType.PAGE
+    )
+    assert page_res.id == "week-1-overview"
+
+    ext_res = next(
+        r for r in result.resources if r.type == AssignmentResourceType.EXTERNAL_URL
+    )
+    assert ext_res.url == "https://example.com/reading"
+
+
+async def test_get_page_resources_empty(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_returns(
+        "v1/courses/100001/pages/announcements-summary",
+        PAGE_DETAIL_EMPTY_RESOURCES_REST,
+    )
+
+    result = await get_page_resources("100001", "announcements-summary")
+
+    assert isinstance(result, PageResources)
+    assert result.status == "empty"
+    assert result.result_count == 0
+    assert result.resources == []
+    assert result.empty_reason is not None
+
+
+async def test_get_page_resources_not_found(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_error(
+        "v1/courses/100001/pages/missing-page",
+        status_code=404,
+        message="Canvas API endpoint not found",
+    )
+
+    result = await get_page_resources("100001", "missing-page")
 
     assert_http_error(result, 404)

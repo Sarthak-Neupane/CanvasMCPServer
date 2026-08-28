@@ -49,6 +49,7 @@ from .modules.module_item_model import (
 )
 from .modules.module_summary_model import ModuleSummary
 from .pages.page_detail_model import PageDetail
+from .pages.page_resources_model import PageResources
 from .pages.page_summary_model import PageSummary
 from .planner.planner_item_model import PlannerItem, PlannerSubmissionStatus
 from .quizzes.quiz_detail_model import QuizDetail
@@ -134,6 +135,7 @@ __all__: Final[List[str]] = [
     # Pages
     "PageSummary",
     "PageDetail",
+    "PageResources",
     # Planner
     "PlannerItem",
     "PlannerSubmissionStatus",

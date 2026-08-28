@@ -40,7 +40,11 @@ from .modules import (
     get_module_item_details_tool,
     get_module_items_tool,
 )
-from .pages import get_course_pages_tool, get_page_tool
+from .pages import (
+    get_course_pages_tool,
+    get_page_resources_tool,
+    get_page_tool,
+)
 from .planner import get_planner_items_tool
 from .quizzes import get_course_quizzes_tool, get_quiz_tool
 from .rubrics import get_assignment_rubric_tool
@@ -54,6 +58,7 @@ ALL_TOOLS: Final[List[Tool]] = [
     get_course_syllabus_tool,
     get_course_pages_tool,
     get_page_tool,
+    get_page_resources_tool,
     get_planner_items_tool,
     get_calendar_events_tool,
     get_course_discussions_tool,
@@ -92,6 +97,7 @@ __all__: Final[List[str]] = [
     "get_course_syllabus_tool",
     "get_course_pages_tool",
     "get_page_tool",
+    "get_page_resources_tool",
     "get_planner_items_tool",
     "get_calendar_events_tool",
     "get_course_discussions_tool",
