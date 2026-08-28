@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 from ..config import config
+from ..errors.codes import ErrorCode
 from ..models import DownloadBatchResult, DownloadedFile, DownloadFailure, FileDetail
 from .canvas_api import canvas_api_client
 from .http_client import HTTPError
@@ -164,6 +165,22 @@ async def download_one_file(
         if isinstance(detail, str):
             return DownloadFailure(file_id=file_id, message=detail)
 
+        # Validate course ownership when Canvas exposes context metadata
+        if (
+            detail.context_type
+            and detail.context_type.lower() == "course"
+            and detail.context_id is not None
+            and str(detail.context_id) != str(course_id)
+        ):
+            return DownloadFailure(
+                file_id=file_id,
+                message=(
+                    f"File {file_id} belongs to course {detail.context_id}, "
+                    f"not requested course {course_id}"
+                ),
+                code=ErrorCode.RESOURCE_COURSE_MISMATCH.value,
+            )
+
         if not detail.url:
             return DownloadFailure(
                 file_id=file_id,
@@ -221,20 +238,44 @@ async def download_many_files(
     course_dir, _download_root = resolve_download_dir(course_name, folder)
 
     downloaded: List[DownloadedFile] = []
+    skipped: List[DownloadedFile] = []
     failed: List[DownloadFailure] = []
 
     for file_id in file_ids:
         result = await download_one_file(file_id, course_id, folder)
         if isinstance(result, DownloadFailure):
             failed.append(result)
+        elif result.skipped:
+            skipped.append(result)
         else:
             downloaded.append(result)
 
+    matched_count = len(file_ids)
+    downloaded_count = len(downloaded)
+    skipped_count = len(skipped)
+    failed_count = len(failed)
+
+    if matched_count == 0:
+        status = "nothing_found"
+    elif failed_count == 0:
+        if skipped_count == matched_count:
+            status = "all_skipped"
+        else:
+            status = "completed"
+    elif downloaded_count > 0 or skipped_count > 0:
+        status = "completed_with_failures"
+    else:
+        status = "failed"
+
     return DownloadBatchResult(
+        status=status,
+        matched_count=matched_count,
+        downloaded_count=downloaded_count,
+        skipped_count=skipped_count,
+        failed_count=failed_count,
+        result_count=downloaded_count + skipped_count + failed_count,
         destination_root=str(course_dir),
         downloaded=downloaded,
+        skipped=skipped,
         failed=failed,
-        downloaded_count=len(downloaded),
-        failed_count=len(failed),
-        result_count=len(downloaded) + len(failed),
     )

@@ -38,6 +38,20 @@ async def test_get_course_files_search_term(canvas_api: CanvasAPIMock) -> None:
     )
 
 
+async def test_get_course_files_content_type_alias(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_returns("v1/courses/100001/files", FILE_LIST_REST)
+
+    await get_course_files("100001", content_type="pdf")
+
+    assert canvas_api.get_rest_paginated_mock.await_args is not None
+    assert (
+        canvas_api.get_rest_paginated_mock.await_args.kwargs["params"][
+            "content_types[]"
+        ]
+        == "application/pdf"
+    )
+
+
 async def test_get_course_files_follows_link_pages(canvas_api: CanvasAPIMock) -> None:
     page_two_item = {
         **FILE_LIST_REST[0],

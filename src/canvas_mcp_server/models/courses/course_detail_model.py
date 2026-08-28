@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,16 +14,16 @@ class CourseDetail(BaseModel):
         ),
     ]
     name: Annotated[
-        str,
+        Optional[str],
         Field(
             description="the full name of the course",
             examples=["InstructureCon 2012"],
         ),
-    ]
+    ] = None
     courseCode: Annotated[
-        str,
+        Optional[str],
         Field(description="the course code", examples=["INSTCON12"]),
-    ]
+    ] = None
     state: Annotated[
         WorkflowState,
         Field(

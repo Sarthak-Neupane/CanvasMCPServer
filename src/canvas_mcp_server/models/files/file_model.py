@@ -14,6 +14,14 @@ class FileSummary(BaseModel):
         Optional[int],
         Field(description="The folder containing this file"),
     ] = None
+    context_type: Annotated[
+        Optional[str],
+        Field(description="Context type, e.g. Course, User, Group"),
+    ] = None
+    context_id: Annotated[
+        Optional[int],
+        Field(description="Context ID, e.g. numeric course ID"),
+    ] = None
     display_name: Annotated[
         Optional[str],
         Field(description="The name shown for the file in Canvas"),

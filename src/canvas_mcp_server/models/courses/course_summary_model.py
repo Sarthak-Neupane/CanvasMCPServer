@@ -21,12 +21,12 @@ class CourseSummary(BaseModel):
         ),
     ] = None
     name: Annotated[
-        str,
+        Optional[str],
         Field(
-            description="The full name of the course",
+            description="The full name of the course, if defined.",
             examples=["InstructureCon 2012"],
         ),
-    ]
+    ] = None
     term: Annotated[
         Optional[Term],
         Field(description="The term associated with the course, if any."),

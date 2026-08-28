@@ -78,7 +78,7 @@ Some tools return a single object with a named list plus `result_count`:
 | `get_submission_status` | `AssignmentSubmissions` | `submissions` |
 | `get_course_grades` | `CourseGrades` | `enrollments` |
 | `get_assignment_rubric` | `Rubric` | `criteria` |
-| `download_*` (batch) | `DownloadBatchResult` | `downloaded` / `failed` (+ `downloaded_count`, `failed_count`, `result_count`) |
+| `download_*` (batch) | `DownloadBatchResult` | `status`, `matched_count`, `downloaded_count`, `skipped_count`, `failed_count`, `result_count`, `downloaded`, `skipped`, `failed` |
 
 ## Implementation
 

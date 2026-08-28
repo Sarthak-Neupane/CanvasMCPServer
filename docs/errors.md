@@ -76,6 +76,7 @@ Example (discussion locked):
 | `download_failed` | Download Error | no | A file download failed after metadata was resolved. |
 | `download_too_large` | Download Error | no | File exceeds `CANVAS_MAX_DOWNLOAD_SIZE_MB`. |
 | `download_url_rejected` | Download Error | no | Download URL failed host/scheme validation. |
+| `resource_course_mismatch` | Resource Course Mismatch | no | The requested file belongs to a different course than specified. |
 | `discussion_locked` | Discussion Locked | no | `require_initial_post` — post before viewing replies. |
 | `discussion_unavailable` | Discussion Unavailable | **yes** | Discussion view not built yet (HTTP 503). |
 | `rubric_not_found` | Not Found | no | Assignment exists but has no rubric attached. |

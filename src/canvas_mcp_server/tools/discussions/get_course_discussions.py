@@ -56,7 +56,13 @@ async def get_course_discussions(
             params=params,
             max_items=resolve_list_limit(limit),
         )
-        items = [DiscussionSummary.model_validate(topic) for topic in paginated.items]
+        items = [
+            DiscussionSummary.model_validate(topic)
+            for topic in paginated.items
+            if isinstance(topic, dict)
+            and not topic.get("is_announcement")
+            and not topic.get("announcement")
+        ]
         return finalize_list(
             items, resolve_list_limit(limit), truncated=paginated.truncated
         )

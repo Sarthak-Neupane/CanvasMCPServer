@@ -75,6 +75,46 @@ async def test_get_course_discussions_search_term(canvas_api: CanvasAPIMock) -> 
     assert params["only_announcements"] is False
 
 
+async def test_get_course_discussions_filters_out_announcements(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    mixed_payload = [
+        {
+            "id": 400001,
+            "title": "Regular Discussion",
+            "is_announcement": False,
+        },
+        {
+            "id": 400002,
+            "title": "Course Announcement",
+            "is_announcement": True,
+        },
+        {
+            "id": 400003,
+            "title": "Another Announcement",
+            "announcement": True,
+        },
+        {
+            "id": 400004,
+            "title": "Genuine Discussion",
+            "is_announcement": False,
+        },
+    ]
+    canvas_api.rest_returns(
+        "v1/courses/100001/discussion_topics",
+        mixed_payload,
+    )
+
+    result = await get_course_discussions("100001")
+
+    assert result.result_count == 2
+    assert [d.discussion_id for d in result.results] == [400001, 400004]
+    assert [d.title for d in result.results] == [
+        "Regular Discussion",
+        "Genuine Discussion",
+    ]
+
+
 async def test_get_discussion_success(canvas_api: CanvasAPIMock) -> None:
     canvas_api.rest_returns(
         "v1/courses/100001/discussion_topics/400001",

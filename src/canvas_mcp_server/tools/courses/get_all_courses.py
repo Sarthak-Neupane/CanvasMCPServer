@@ -178,8 +178,12 @@ async def get_all_courses(
 
         response = await canvas_api_client.post_graphql_query(GRAPHQL_QUERY)
         data = extract_graphql_data(response)
-        course_list = data["allCourses"]
-        courses = [CourseSummary.model_validate(course) for course in course_list]
+        course_list = data.get("allCourses") or []
+        courses = [
+            CourseSummary.model_validate(course)
+            for course in course_list
+            if isinstance(course, dict)
+        ]
         capped, cut = cap_items(courses, item_limit)
         return finalize_list(capped, item_limit, truncated=cut)
 

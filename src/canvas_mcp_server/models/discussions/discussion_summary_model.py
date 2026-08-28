@@ -85,6 +85,10 @@ class DiscussionSummary(BaseModel):
         Optional[bool],
         Field(description="Whether the topic is pinned"),
     ] = None
+    is_announcement: Annotated[
+        Optional[bool],
+        Field(description="Whether this topic is an announcement"),
+    ] = None
     subscription_hold: Annotated[
         Optional[str],
         Field(

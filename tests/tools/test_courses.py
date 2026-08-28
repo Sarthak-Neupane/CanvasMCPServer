@@ -33,6 +33,41 @@ async def test_get_all_courses_graphql_success(canvas_api: CanvasAPIMock) -> Non
     assert result.results[0].term.name == "Fall 2025"
 
 
+async def test_get_all_courses_tolerates_missing_name(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    graphql_data = {
+        "allCourses": [
+            {
+                "id": "course-gid-100001",
+                "name": None,
+                "courseCode": "SHELL101",
+                "term": None,
+            },
+            {
+                "id": "course-gid-100002",
+                "name": "Valid Course",
+                "courseCode": "VAL201",
+                "term": {
+                    "id": "term-gid-9001",
+                    "_id": "9001",
+                    "name": "Fall 2025",
+                    "startAt": "2025-08-15T00:00:00Z",
+                    "endAt": "2025-12-15T23:59:59Z",
+                },
+            },
+        ]
+    }
+    canvas_api.graphql_returns(graphql_data)
+
+    result = await get_all_courses()
+
+    assert result.result_count == 2
+    assert result.results[0].name is None
+    assert result.results[0].courseCode == "SHELL101"
+    assert result.results[1].name == "Valid Course"
+
+
 async def test_get_all_courses_term_filter(canvas_api: CanvasAPIMock) -> None:
     canvas_api.graphql_returns(ALL_COURSES_GRAPHQL)
     canvas_api.rest_returns("v1/courses", [REST_COURSES_ACTIVE[0]])

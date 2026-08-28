@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from canvas_mcp_server.errors import ErrorCode
 from canvas_mcp_server.models import (
     AssignmentDetail,
     AssignmentSummary,
@@ -26,7 +27,7 @@ from tests.fixtures.assignments import (
     UPCOMING_EVENTS_REST,
 )
 from tests.fixtures.todos import TODO_ITEMS_REST
-from tests.helpers.assertions import assert_list_result
+from tests.helpers.assertions import assert_list_result, assert_tool_error
 from tests.helpers.canvas_mock import CanvasAPIMock
 
 
@@ -85,6 +86,19 @@ async def test_get_assignment_details(canvas_api: CanvasAPIMock) -> None:
     assert result.course is not None
     assert result.course.id == "100001"
     assert result.course.name == "Intro to Testing"
+
+
+async def test_get_assignment_details_not_found(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.graphql_returns({"assignment": None})
+
+    result = await get_assignment_details("999999")
+
+    assert_tool_error(
+        result,
+        ErrorCode.RESOURCE_NOT_FOUND,
+        title="Not Found",
+        message_contains="Assignment 999999 not found",
+    )
 
 
 async def test_get_todo_items(canvas_api: CanvasAPIMock) -> None:

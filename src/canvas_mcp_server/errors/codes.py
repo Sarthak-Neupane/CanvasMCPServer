@@ -41,6 +41,7 @@ class ErrorCode(StrEnum):
     DOWNLOAD_FAILED = "download_failed"
     DOWNLOAD_TOO_LARGE = "download_too_large"
     DOWNLOAD_URL_REJECTED = "download_url_rejected"
+    RESOURCE_COURSE_MISMATCH = "resource_course_mismatch"
 
     # Discussion-specific
     DISCUSSION_LOCKED = "discussion_locked"
@@ -135,6 +136,10 @@ ERROR_DEFINITIONS: Final[Mapping[ErrorCode, ErrorDefinition]] = {
     ErrorCode.DOWNLOAD_URL_REJECTED: ErrorDefinition(
         title="Download Error",
         description="A file download URL failed local security validation.",
+    ),
+    ErrorCode.RESOURCE_COURSE_MISMATCH: ErrorDefinition(
+        title="Resource Course Mismatch",
+        description="The requested file does not belong to the specified course.",
     ),
     ErrorCode.DISCUSSION_LOCKED: ErrorDefinition(
         title="Discussion Locked",

@@ -11,6 +11,7 @@ from pydantic import Field
 from ...errors import as_tool_error
 from ...models import ListResult, QuizSummary
 from ...utils import canvas_api_client
+from ...utils.http_client import HTTPError
 from ...utils.list_limits import (
     DEFAULT_LIST_LIMIT,
     ListLimitField,
@@ -64,6 +65,10 @@ async def get_course_quizzes(
             items, resolve_list_limit(limit), truncated=paginated.truncated
         )
 
+    except HTTPError as e:
+        if e.status_code == 404:
+            return finalize_list([], resolve_list_limit(limit), truncated=False)
+        return as_tool_error(e, source="canvas_rest")
     except Exception as e:
         return as_tool_error(e, source="canvas_rest")
 

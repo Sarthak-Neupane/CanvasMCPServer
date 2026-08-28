@@ -45,6 +45,19 @@ async def test_get_course_quizzes_search_term(canvas_api: CanvasAPIMock) -> None
     )
 
 
+async def test_get_course_quizzes_404_returns_empty(canvas_api: CanvasAPIMock) -> None:
+    canvas_api.rest_error(
+        "v1/courses/100001/quizzes",
+        status_code=404,
+        message="Endpoint not found",
+    )
+
+    result = await get_course_quizzes("100001")
+
+    assert result.result_count == 0
+    assert result.results == []
+
+
 async def test_get_quiz_success(canvas_api: CanvasAPIMock) -> None:
     canvas_api.rest_returns(
         "v1/courses/100001/quizzes/500001",

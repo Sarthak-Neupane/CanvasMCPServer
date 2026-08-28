@@ -5,7 +5,8 @@ from typing import Annotated, Any, Dict, Final, TypeAlias, Union
 from mcp.server.fastmcp.tools import Tool
 from pydantic import Field
 
-from ...errors import as_tool_error
+from ...errors import as_tool_error, tool_error
+from ...errors.codes import ErrorCode
 from ...models import AssignmentDetail
 from ...utils import canvas_api_client, extract_graphql_data
 from ...utils.content_metadata import attach_content_metadata
@@ -61,7 +62,12 @@ async def get_assignment_details(
         data = extract_graphql_data(response)
         assignment = data.get("assignment")
         if assignment is None:
-            raise Exception(f"No assignment found for id: {assignment_id}")
+            return tool_error(
+                ErrorCode.RESOURCE_NOT_FOUND,
+                f"Assignment {assignment_id} not found.",
+                source="canvas_graphql",
+                details={"assignment_id": assignment_id},
+            ).to_response()
         detail = AssignmentDetail.model_validate(assignment)
         course_id = str((assignment.get("course") or {}).get("_id") or "")
         return attach_content_metadata(

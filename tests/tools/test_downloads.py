@@ -269,8 +269,55 @@ async def test_download_course_files_partial_failure(
     result = await download_course_files("100001", folder="batch")
 
     assert isinstance(result, DownloadBatchResult)
+    assert result.status == "completed_with_failures"
+    assert result.matched_count == 2
+    assert result.downloaded_count == 1
+    assert result.failed_count == 1
     assert len(result.downloaded) == 1
     assert result.downloaded[0].file_id == "500001"
     assert len(result.failed) == 1
     assert result.failed[0].file_id == "500002"
     assert "Forbidden" in result.failed[0].message
+
+
+async def test_download_file_course_mismatch(
+    canvas_api: CanvasAPIMock,
+    download_dir: Path,
+) -> None:
+    canvas_api.rest_returns("v1/courses/100002", {"id": 100002, "name": "French 101"})
+    # File belongs to course 100001 (Physics), but caller asked for course 100002 (French)
+    file_detail = {
+        **FILE_DETAIL_REST,
+        "context_type": "Course",
+        "context_id": 100001,
+    }
+    canvas_api.rest_returns("v1/files/500001", file_detail)
+
+    result = await download_file("500001", "100002", folder="verify")
+
+    assert_tool_error(
+        result,
+        ErrorCode.RESOURCE_COURSE_MISMATCH,
+        title="Resource Course Mismatch",
+        message_contains="belongs to course 100001",
+    )
+    # Ensure no file was written to disk
+    assert not (download_dir / "French 101").exists()
+
+
+async def test_download_course_files_nothing_found(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    canvas_api.rest_returns("v1/courses/100001", COURSE_META_REST)
+    canvas_api.rest_returns("v1/courses/100001/files", [])
+
+    result = await download_course_files("100001")
+
+    assert isinstance(result, DownloadBatchResult)
+    assert result.status == "nothing_found"
+    assert result.matched_count == 0
+    assert result.downloaded_count == 0
+    assert result.failed_count == 0
+    assert result.skipped_count == 0
+    assert result.downloaded == []
+    assert result.failed == []
