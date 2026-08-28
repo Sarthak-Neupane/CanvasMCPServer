@@ -68,7 +68,39 @@ REST_COURSES_ACTIVE = [
 SYLLABUS_HTML_REST = {
     "id": 100001,
     "name": "Intro to Testing",
-    "syllabus_body": "<p>Welcome to Intro to Testing.</p>",
+    "syllabus_body": (
+        "<p>Welcome to Intro to Testing. Grading weights: Exams 50%, "
+        "Homework 30%, Participation 20%.</p>"
+    ),
+}
+
+SYLLABUS_FILE_LINK_REST = {
+    "id": 100001,
+    "name": "Intro to Testing",
+    "syllabus_body": (
+        '<p><a href="/courses/100001/files/500001/download" '
+        'data-api-endpoint="https://canvas.example.edu/api/v1/courses/100001/files/500001">'
+        "Download Syllabus.txt</a></p>"
+    ),
+}
+
+SYLLABUS_EXTERNAL_LINK_REST = {
+    "id": 100001,
+    "name": "Intro to Testing",
+    "syllabus_body": (
+        '<p><a href="https://docs.google.com/document/d/12345/view">'
+        "Course Syllabus Google Doc</a></p>"
+    ),
+}
+
+SYLLABUS_FILE_REST = {
+    "id": 500001,
+    "folder_id": 600001,
+    "display_name": "Syllabus.txt",
+    "filename": "Syllabus.txt",
+    "content-type": "text/plain",
+    "url": "https://canvas.example.edu/files/500001/download?download_frd=1",
+    "size": 128,
 }
 
 SYLLABUS_EMPTY_REST = {

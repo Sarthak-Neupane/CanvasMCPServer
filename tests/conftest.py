@@ -35,12 +35,14 @@ def canvas_api(monkeypatch) -> CanvasAPIMock:
     original_rest = canvas_api_client.get_rest
     original_get_rest_paginated = canvas_api_client.get_rest_paginated
     original_download_to_path = canvas_api_client.download_file_to_path
+    original_download_file_bytes = canvas_api_client.download_file_bytes
     mock = CanvasAPIMock().apply()
     yield mock
     canvas_api_client.post_graphql_query = original_graphql
     canvas_api_client.get_rest = original_rest
     canvas_api_client.get_rest_paginated = original_get_rest_paginated
     canvas_api_client.download_file_to_path = original_download_to_path
+    canvas_api_client.download_file_bytes = original_download_file_bytes
 
 
 @pytest.fixture

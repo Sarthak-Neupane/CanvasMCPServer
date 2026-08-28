@@ -14,6 +14,9 @@ from tests.fixtures.courses import (
     DASHBOARD_CARDS_REST,
     REST_COURSES_ACTIVE,
     SYLLABUS_EMPTY_REST,
+    SYLLABUS_EXTERNAL_LINK_REST,
+    SYLLABUS_FILE_LINK_REST,
+    SYLLABUS_FILE_REST,
     SYLLABUS_HTML_REST,
 )
 from tests.helpers.assertions import assert_http_error, assert_list_result
@@ -118,7 +121,47 @@ async def test_get_course_syllabus_success(canvas_api: CanvasAPIMock) -> None:
     assert isinstance(result, CourseSyllabus)
     assert result.course_id == "100001"
     assert result.course_name == "Intro to Testing"
-    assert result.syllabus_body == "<p>Welcome to Intro to Testing.</p>"
+    assert result.source_type == "inline_html"
+    assert result.syllabus_body == (
+        "<p>Welcome to Intro to Testing. Grading weights: Exams 50%, "
+        "Homework 30%, Participation 20%.</p>"
+    )
+    assert result.text is not None
+    assert "Grading weights: Exams 50%" in result.text
+    assert result.extraction_status == "ok"
+
+
+async def test_get_course_syllabus_auto_follow_file(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    canvas_api.rest_returns("v1/courses/100001", SYLLABUS_FILE_LINK_REST)
+    canvas_api.rest_returns("v1/files/500001", SYLLABUS_FILE_REST)
+    canvas_api.download_returns(
+        "https://canvas.example.edu/files/500001/download?download_frd=1",
+        b"Syllabus Content: Office Hours Monday 2-4pm.",
+    )
+
+    result = await get_course_syllabus("100001")
+
+    assert isinstance(result, CourseSyllabus)
+    assert result.source_type == "canvas_file"
+    assert result.file is not None
+    assert result.file.id == 500001
+    assert result.text == "Syllabus Content: Office Hours Monday 2-4pm."
+    assert result.extraction_status == "ok"
+
+
+async def test_get_course_syllabus_external_url(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    canvas_api.rest_returns("v1/courses/100001", SYLLABUS_EXTERNAL_LINK_REST)
+
+    result = await get_course_syllabus("100001")
+
+    assert isinstance(result, CourseSyllabus)
+    assert result.source_type == "external_url"
+    assert result.external_url == "https://docs.google.com/document/d/12345/view"
+    assert result.extraction_status == "not_applicable"
 
 
 async def test_get_course_syllabus_empty_body(canvas_api: CanvasAPIMock) -> None:
@@ -128,6 +171,9 @@ async def test_get_course_syllabus_empty_body(canvas_api: CanvasAPIMock) -> None
 
     assert isinstance(result, CourseSyllabus)
     assert result.syllabus_body is None
+    assert result.source_type == "missing"
+    assert result.extraction_status == "empty"
+    assert result.text is None
 
 
 @pytest.mark.parametrize(

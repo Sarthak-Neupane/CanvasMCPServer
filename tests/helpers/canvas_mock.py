@@ -54,7 +54,9 @@ class CanvasAPIMock:
     rest: AsyncMock = field(default_factory=AsyncMock)
     get_rest_paginated_mock: AsyncMock = field(default_factory=AsyncMock)
     download_to_path: AsyncMock = field(default_factory=AsyncMock)
+    download_bytes: AsyncMock = field(default_factory=AsyncMock)
     _rest_routes: Dict[str, RestRoute] = field(default_factory=dict)
+    _download_routes: Dict[str, bytes] = field(default_factory=dict)
     _graphql_queue: List[HTTPResponse] = field(default_factory=list)
     _paginated_pages: Dict[str, List[HTTPResponse]] = field(default_factory=dict)
 
@@ -123,9 +125,21 @@ class CanvasAPIMock:
                 )
             return self._graphql_queue.pop(0)
 
+        async def _download_bytes_handler(
+            url: str,
+            timeout: Optional[float] = None,
+        ) -> bytes:
+            del timeout
+            if url in self._download_routes:
+                return self._download_routes[url]
+            from tests.fixtures.files import FILE_BYTES
+
+            return FILE_BYTES
+
         self.rest.side_effect = _rest_handler
         self.graphql.side_effect = _graphql_handler
         self.download_to_path.side_effect = _download_to_path_handler
+        self.download_bytes.side_effect = _download_bytes_handler
         self.get_rest_paginated_mock.side_effect = self._get_rest_paginated_handler
 
     async def _get_rest_paginated_handler(
@@ -285,6 +299,15 @@ class CanvasAPIMock:
         self.graphql.side_effect = _raise
         return self
 
+    def download_returns(
+        self,
+        url: str,
+        content: bytes,
+    ) -> "CanvasAPIMock":
+        """Register raw bytes to return for a download URL."""
+        self._download_routes[url] = content
+        return self
+
     def apply(self) -> "CanvasAPIMock":
         """Patch the global client and return self."""
         self.configure()
@@ -292,4 +315,5 @@ class CanvasAPIMock:
         canvas_api_client.get_rest = self.rest
         canvas_api_client.get_rest_paginated = self.get_rest_paginated_mock
         canvas_api_client.download_file_to_path = self.download_to_path
+        canvas_api_client.download_file_bytes = self.download_bytes
         return self
