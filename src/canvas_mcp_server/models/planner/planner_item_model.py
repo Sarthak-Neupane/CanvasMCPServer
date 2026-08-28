@@ -53,8 +53,21 @@ class PlannerItem(BaseModel):
         Optional[datetime],
         Field(
             description=(
-                "Due or todo datetime for the item (timezone-aware when Canvas "
-                "provides an offset or Z suffix)"
+                "Due or todo datetime for the item (timezone-aware ISO-8601 when "
+                "Canvas provides an offset or Z suffix)"
+            ),
+        ),
+    ] = None
+    all_day: Annotated[
+        Optional[bool],
+        Field(description="True for all-day or midnight-due planner items"),
+    ] = None
+    all_day_date: Annotated[
+        Optional[str],
+        Field(
+            description=(
+                "Calendar date (yyyy-mm-dd) for day-specific calendar reasoning "
+                "when all_day is true"
             ),
         ),
     ] = None

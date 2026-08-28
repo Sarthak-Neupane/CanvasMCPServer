@@ -44,3 +44,33 @@ async def test_get_planner_items_date_and_course_filters(
     assert params["start_date"] == "2026-08-27"
     assert params["end_date"] == "2026-09-03"
     assert params["context_codes[]"] == "course_100001"
+
+
+async def test_get_planner_items_preserves_offset_and_all_day(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    planner_payload = [
+        {
+            "context_type": "Course",
+            "course_id": 100001,
+            "plannable_id": "200005",
+            "plannable_type": "assignment",
+            "plannable": {
+                "id": 200005,
+                "title": "Timed Quiz Due",
+                "due_at": "2026-08-28T23:59:00-05:00",
+                "all_day": True,
+                "all_day_date": "2026-08-28",
+            },
+        }
+    ]
+    canvas_api.rest_returns("v1/planner/items", planner_payload)
+
+    result = await get_planner_items()
+
+    assert result.result_count == 1
+    item = result.results[0]
+    assert item.due_at is not None
+    assert item.due_at.tzinfo is not None
+    assert item.all_day is True
+    assert item.all_day_date == "2026-08-28"

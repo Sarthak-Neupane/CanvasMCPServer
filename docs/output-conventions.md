@@ -19,13 +19,13 @@ as `id` (string). REST numeric primary keys are usually `int` fields named
 Treat all identifiers as opaque strings when comparing or passing between
 tools, even when the JSON type is a number (`str(course_id)` is safe).
 
-## Timestamps
+## Timestamps and scheduling policy
 
-- Model fields use `datetime` (timezone-aware when Canvas sends offsets).
-- JSON serialization emits ISO-8601 strings (e.g. `2026-08-27T18:00:00Z`).
-- Do not strip timezone offsets or normalize to naive local time.
-- All-day calendar dates use `all_day_date` (`yyyy-mm-dd` string), not
-  `datetime`.
+- **Timezone-aware ISO-8601**: Model timestamp fields (`due_at`, `dueAt`, `start_at`, `end_at`, `unlock_at`, `lock_at`, `posted_at`, `created_at`, `updated_at`) preserve Canvas timezone offsets without naive truncation.
+- **Calendar-local date semantics**: When Canvas provides an all-day flag or date (`all_day: true`, `all_day_date: "yyyy-mm-dd"`), `all_day_date` is preserved as a `yyyy-mm-dd` string. For day-level natural language queries (e.g. "What's happening Friday?", "What is due today?"), agents should inspect `all_day_date` directly to prevent late-night local deadlines (e.g. 11:59 PM local) from skewing across midnight into the wrong day.
+- **Planner vs Calendar semantics**:
+  - `get_calendar_events`: Authoritative for day-specific scheduled events, timetable slots, and assignment deadlines on the calendar across enrolled courses.
+  - `get_planner_items`: Structured academic planning feed including assignments, quizzes, discussions, pages, and personal planner notes with submission tracking flags (`missing`, `late`, `needs_grading`). Does not replace full calendar feeds.
 
 ## Nullable fields
 

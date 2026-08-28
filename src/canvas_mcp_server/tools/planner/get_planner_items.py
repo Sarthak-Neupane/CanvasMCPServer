@@ -93,8 +93,10 @@ get_planner_items_tool: Final[Tool] = Tool.from_function(
     name="get_planner_items",
     description=(
         "List Canvas student planner items (assignments, quizzes, discussions, "
-        "pages, notes, etc.) with normalized types and due dates. Optional "
-        "start_date, end_date, and course_id filters."
+        "pages, notes) with normalized types, due/todo dates, and submission status "
+        "flags (missing, late, graded). Useful for academic planning and todo feeds. "
+        "Note: planner may omit non-academic calendar events; use get_calendar_events "
+        "for authoritative day schedules."
     ),
     fn=get_planner_items,
 )

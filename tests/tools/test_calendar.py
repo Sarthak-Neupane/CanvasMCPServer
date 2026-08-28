@@ -72,3 +72,45 @@ async def test_get_calendar_events_course_filter(
         params = call.kwargs["params"]
         assert params["context_codes[]"] == ["course_100001"]
         assert params["type"] in ("event", "assignment")
+
+
+async def test_get_calendar_events_preserves_timezone_and_all_day_date(
+    canvas_api: CanvasAPIMock,
+) -> None:
+    events_payload = [
+        {
+            "id": 900002,
+            "title": "Review Session",
+            "start_at": "2026-08-28T19:30:00-05:00",
+            "end_at": "2026-08-28T21:00:00-05:00",
+            "all_day": False,
+            "all_day_date": None,
+            "context_code": "course_100001",
+        },
+        {
+            "id": "assignment_200002",
+            "title": "Midnight Project Submission",
+            "start_at": "2026-08-28T23:59:00-05:00",
+            "end_at": "2026-08-28T23:59:00-05:00",
+            "all_day": True,
+            "all_day_date": "2026-08-28",
+            "context_code": "course_100001",
+        },
+    ]
+    canvas_api.rest_returns("v1/calendar_events", events_payload)
+
+    result = await get_calendar_events(course_id="100001")
+
+    assert result.result_count == 4  # 2 events fetched for each of the 2 event types
+    review = next(r for r in result.results if r.title == "Review Session")
+    assert review.start_at is not None
+    assert review.start_at.tzinfo is not None
+    assert review.all_day is False
+
+    project = next(
+        r for r in result.results if r.title == "Midnight Project Submission"
+    )
+    assert project.all_day is True
+    assert project.all_day_date == "2026-08-28"
+    assert project.start_at is not None
+    assert project.start_at.tzinfo is not None

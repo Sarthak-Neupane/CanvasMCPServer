@@ -70,6 +70,16 @@ def planner_item_from_api(raw: Dict[str, Any]) -> PlannerItem:
     plannable_id = raw.get("plannable_id")
     due_raw = _plannable_datetime(plannable, plannable_type)
 
+    all_day = plannable.get("all_day")
+    if all_day is None and raw.get("all_day") is not None:
+        all_day = raw.get("all_day")
+
+    all_day_date = plannable.get("all_day_date") or raw.get("all_day_date")
+    if not all_day_date and all_day and raw.get("plannable_date"):
+        all_day_date = str(raw.get("plannable_date"))
+    if all_day_date and "T" in str(all_day_date):
+        all_day_date = str(all_day_date).split("T")[0]
+
     return PlannerItem(
         item_type=normalize_plannable_type(plannable_type),
         plannable_type=plannable_type or None,
@@ -78,6 +88,8 @@ def planner_item_from_api(raw: Dict[str, Any]) -> PlannerItem:
         context_type=raw.get("context_type"),
         title=_plannable_title(plannable),
         due_at=due_raw,
+        all_day=all_day,
+        all_day_date=all_day_date,
         html_url=raw.get("html_url"),
         marked_complete=marked_complete,
         submissions=submissions,

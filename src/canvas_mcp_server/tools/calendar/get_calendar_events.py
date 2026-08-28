@@ -126,12 +126,16 @@ async def get_calendar_events(
             events.extend(batch)
             truncated = truncated or batch_truncated
 
-        events.sort(
-            key=lambda item: (
-                item.start_at is None,
-                item.start_at or item.all_day_date or "",
-            )
-        )
+        def _event_sort_key(item: CalendarEvent) -> tuple[int, str]:
+            if item.all_day and item.all_day_date:
+                return (0, f"{item.all_day_date}T00:00:00")
+            if item.start_at is not None:
+                return (0, item.start_at.isoformat())
+            if item.all_day_date:
+                return (0, f"{item.all_day_date}T00:00:00")
+            return (1, "")
+
+        events.sort(key=_event_sort_key)
         return finalize_list(events, item_limit, truncated=truncated)
 
     except Exception as e:
@@ -141,8 +145,11 @@ async def get_calendar_events(
 get_calendar_events_tool: Final[Tool] = Tool.from_function(
     name="get_calendar_events",
     description=(
-        "List Canvas calendar events and assignment due dates with optional "
-        "start_date, end_date, and course_id filters. Use limit to cap results."
+        "List Canvas calendar events and assignment due dates. Authoritative for "
+        "day-specific calendar queries ('What's happening Friday?', 'What is due "
+        "on 2026-08-28?'). Preserves all_day_date (yyyy-mm-dd) for day-level "
+        "reasoning without timezone skew. Scopes to dashboard courses (up to 10) "
+        "or a specific course_id with optional start_date and end_date filters."
     ),
     fn=get_calendar_events,
 )
